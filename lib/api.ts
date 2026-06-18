@@ -20,7 +20,10 @@ export async function apiFetch<T>(
     },
   });
 
-  const data = await response.json().catch(() => ({}));
+  const data =
+    response.status === 204
+      ? {}
+      : await response.json().catch(() => ({}));
 
   if (!response.ok) {
     throw new ApiError(

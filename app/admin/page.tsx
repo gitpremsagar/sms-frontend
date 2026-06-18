@@ -47,9 +47,14 @@ export default async function AdminPage() {
                 : `${teachers.length} teacher${teachers.length === 1 ? "" : "s"} registered.`}
             </CardDescription>
           </div>
-          <Button asChild>
-            <Link href="/admin/teacher/add-teacher">Add Teacher</Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link href="/admin/teacher/attendance">Attendance Register</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/admin/teacher/add-teacher">Add Teacher</Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {teachers.length === 0 ? (

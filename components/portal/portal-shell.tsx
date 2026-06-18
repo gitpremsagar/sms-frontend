@@ -60,7 +60,7 @@ export function PortalShell({ user, children }: PortalShellProps) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-10">{children}</main>
+      <main className="mx-auto px-4 py-10">{children}</main>
     </div>
   );
 }
