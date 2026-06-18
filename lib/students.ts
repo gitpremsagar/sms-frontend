@@ -19,6 +19,14 @@ export type CreateStudentInput = {
   classId: string;
 };
 
+export type UpdateStudentInput = {
+  name?: string;
+  email?: string;
+  password?: string;
+  studentRollNumber?: string;
+  classId?: string;
+};
+
 export async function createStudent(
   input: CreateStudentInput,
 ): Promise<Student> {
@@ -28,4 +36,22 @@ export async function createStudent(
   });
 
   return data.student;
+}
+
+export async function updateStudent(
+  id: string,
+  input: UpdateStudentInput,
+): Promise<Student> {
+  const data = await apiFetch<{ student: Student }>(`/api/students/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+
+  return data.student;
+}
+
+export async function deleteStudent(id: string): Promise<void> {
+  await apiFetch(`/api/students/${id}`, {
+    method: "DELETE",
+  });
 }

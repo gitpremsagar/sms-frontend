@@ -7,6 +7,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ClassRowActions } from "@/components/admin/class-row-actions";
+import { StudentRowActions } from "@/components/admin/student-row-actions";
+import { TeacherRowActions } from "@/components/admin/teacher-row-actions";
 import { requireRole } from "@/lib/require-role";
 import { getClasses } from "@/lib/classes.server";
 import { getTeachers } from "@/lib/teachers.server";
@@ -69,7 +72,8 @@ export default async function AdminPage() {
                     <th className="pb-3 pr-4 font-medium">Name</th>
                     <th className="pb-3 pr-4 font-medium">Email</th>
                     <th className="pb-3 pr-4 font-medium">Employee ID</th>
-                    <th className="pb-3 font-medium">Phone</th>
+                    <th className="pb-3 pr-4 font-medium">Phone</th>
+                    <th className="pb-3 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -80,7 +84,13 @@ export default async function AdminPage() {
                       <td className="py-3 pr-4">
                         {teacher.employeeId ?? "—"}
                       </td>
-                      <td className="py-3">{teacher.phone ?? "—"}</td>
+                      <td className="py-3 pr-4">{teacher.phone ?? "—"}</td>
+                      <td className="py-3">
+                        <TeacherRowActions
+                          id={teacher.id}
+                          name={teacher.name}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -115,7 +125,8 @@ export default async function AdminPage() {
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
                     <th className="pb-3 pr-4 font-medium">Class Name</th>
-                    <th className="pb-3 font-medium">Assigned Teacher</th>
+                    <th className="pb-3 pr-4 font-medium">Assigned Teacher</th>
+                    <th className="pb-3 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -124,7 +135,13 @@ export default async function AdminPage() {
                       <td className="py-3 pr-4 font-medium">
                         {schoolClass.className}
                       </td>
-                      <td className="py-3">{schoolClass.teacherName}</td>
+                      <td className="py-3 pr-4">{schoolClass.teacherName}</td>
+                      <td className="py-3">
+                        <ClassRowActions
+                          id={schoolClass.id}
+                          className={schoolClass.className}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -161,7 +178,8 @@ export default async function AdminPage() {
                     <th className="pb-3 pr-4 font-medium">Name</th>
                     <th className="pb-3 pr-4 font-medium">Email</th>
                     <th className="pb-3 pr-4 font-medium">Roll Number</th>
-                    <th className="pb-3 font-medium">Class</th>
+                    <th className="pb-3 pr-4 font-medium">Class</th>
+                    <th className="pb-3 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -170,7 +188,13 @@ export default async function AdminPage() {
                       <td className="py-3 pr-4 font-medium">{student.name}</td>
                       <td className="py-3 pr-4">{student.email}</td>
                       <td className="py-3 pr-4">{student.studentRollNumber}</td>
-                      <td className="py-3">{student.className}</td>
+                      <td className="py-3 pr-4">{student.className}</td>
+                      <td className="py-3">
+                        <StudentRowActions
+                          id={student.id}
+                          name={student.name}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
