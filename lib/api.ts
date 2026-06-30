@@ -3,7 +3,7 @@ export function getApiBaseUrl(): string {
     return "";
   }
 
-  const baseUrl = process.env.NODE_ENV === "production" ? process.env.NEXT_PUBLIC_APP_URL : "http://localhost:3000";
+  const baseUrl = process.env.NODE_ENV === "production" ? "https://sms-backend-woad.vercel.app" : "http://localhost:3000";
 
   return baseUrl ?? "http://localhost:3000";
 }
