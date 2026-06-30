@@ -5,27 +5,39 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/auth-client";
-import { ROLE_LABELS, type AuthUser } from "@/lib/roles";
+import { ROLE_LABELS } from "@/lib/roles";
 import { schoolContent } from "@/lib/school-content";
+import { clearUser } from "@/store/auth-slice";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
 
 type PortalShellProps = {
-  user: AuthUser;
   children: React.ReactNode;
 };
 
-export function PortalShell({ user, children }: PortalShellProps) {
+export function PortalShell({ children }: PortalShellProps) {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
   const [loading, setLoading] = useState(false);
 
   async function handleLogout() {
     setLoading(true);
     try {
       await logout();
+      dispatch(clearUser());
       router.push("/");
       router.refresh();
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/20">
+        <p className="text-sm text-muted-foreground">Loading session...</p>
+      </div>
+    );
   }
 
   return (

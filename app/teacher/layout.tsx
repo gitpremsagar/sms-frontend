@@ -6,7 +6,7 @@ export default async function TeacherLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireRole("TEACHER");
+  await requireRole("TEACHER");
 
-  return <PortalShell user={user}>{children}</PortalShell>;
+  return <PortalShell>{children}</PortalShell>;
 }

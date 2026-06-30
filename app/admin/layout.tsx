@@ -6,7 +6,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireRole("ADMIN");
+  await requireRole("ADMIN");
 
-  return <PortalShell user={user}>{children}</PortalShell>;
+  return <PortalShell>{children}</PortalShell>;
 }

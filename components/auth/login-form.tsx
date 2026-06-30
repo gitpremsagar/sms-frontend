@@ -18,6 +18,8 @@ import { ApiError } from "@/lib/api";
 import { login } from "@/lib/auth-client";
 import { ROLE_HOME, type Role } from "@/lib/roles";
 import { schoolContent } from "@/lib/school-content";
+import { setUser } from "@/store/auth-slice";
+import { useAppDispatch } from "@/store/hooks";
 
 type LoginFormProps = {
   expectedRole: Role;
@@ -27,6 +29,7 @@ type LoginFormProps = {
 
 export function LoginForm({ expectedRole, title, description }: LoginFormProps) {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -38,7 +41,8 @@ export function LoginForm({ expectedRole, title, description }: LoginFormProps) 
     setLoading(true);
 
     try {
-      await login(email, password, expectedRole);
+      const user = await login(email, password, expectedRole);
+      dispatch(setUser(user));
       router.push(ROLE_HOME[expectedRole]);
       router.refresh();
     } catch (err) {

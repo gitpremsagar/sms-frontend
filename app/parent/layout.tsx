@@ -6,7 +6,7 @@ export default async function ParentLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireRole("PARENT");
+  await requireRole("PARENT");
 
-  return <PortalShell user={user}>{children}</PortalShell>;
+  return <PortalShell>{children}</PortalShell>;
 }

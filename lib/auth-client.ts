@@ -1,7 +1,20 @@
 "use client";
 
-import { apiFetch } from "./api";
+import { apiFetch, ApiError } from "./api";
 import type { AuthUser, Role } from "./roles";
+
+export async function fetchSession(): Promise<AuthUser | null> {
+  try {
+    const data = await apiFetch<{ user: AuthUser }>("/api/auth/me");
+    return data.user;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      return null;
+    }
+
+    throw error;
+  }
+}
 
 export async function login(
   email: string,
