@@ -68,7 +68,7 @@ export function Contact() {
           ))}
         </div>
 
-        <div className="mt-8 flex h-48 items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 text-sm text-muted-foreground">
+        <div className="mt-8 flex h-40 items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 text-sm text-muted-foreground sm:h-48 md:h-64">
           Map placeholder — add Google Maps embed here
         </div>
       </div>

@@ -12,11 +12,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FormActions } from "@/components/ui/form-actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
 import { createClass } from "@/lib/classes";
 import type { Teacher } from "@/lib/teachers";
+
+const selectClassName =
+  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30";
 
 type AddClassFormProps = {
   teachers: Teacher[];
@@ -83,43 +87,45 @@ export function AddClassForm({ teachers }: AddClassFormProps) {
             </Alert>
           ) : null}
 
-          <div className="space-y-2">
-            <Label htmlFor="className">Class Name</Label>
-            <Input
-              id="className"
-              placeholder="e.g. Class 6A"
-              value={className}
-              onChange={(event) => setClassName(event.target.value)}
-              required
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="className">Class Name</Label>
+              <Input
+                id="className"
+                placeholder="e.g. Class 6A"
+                value={className}
+                onChange={(event) => setClassName(event.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="teacherId">Assigned Teacher</Label>
+              <select
+                id="teacherId"
+                value={teacherId}
+                onChange={(event) => setTeacherId(event.target.value)}
+                required
+                className={selectClassName}
+              >
+                {teachers.map((teacher) => (
+                  <option key={teacher.id} value={teacher.id}>
+                    {teacher.name}
+                    {teacher.employeeId ? ` (${teacher.employeeId})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="teacherId">Assigned Teacher</Label>
-            <select
-              id="teacherId"
-              value={teacherId}
-              onChange={(event) => setTeacherId(event.target.value)}
-              required
-              className="flex h-7 w-full rounded-md border border-input bg-transparent px-2 text-xs/relaxed outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
-            >
-              {teachers.map((teacher) => (
-                <option key={teacher.id} value={teacher.id}>
-                  {teacher.name}
-                  {teacher.employeeId ? ` (${teacher.employeeId})` : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex gap-3">
+          <FormActions>
             <Button type="submit" disabled={loading}>
               {loading ? "Creating..." : "Create Class"}
             </Button>
             <Button variant="outline" asChild>
               <Link href="/admin">Cancel</Link>
             </Button>
-          </div>
+          </FormActions>
         </form>
       </CardContent>
     </Card>

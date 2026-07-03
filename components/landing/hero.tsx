@@ -26,10 +26,10 @@ export function Hero() {
             students to grow, lead, and thrive.
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Button
               size="lg"
-              className="bg-school-gold text-school-gold-foreground hover:bg-school-gold/90"
+              className="w-full bg-school-gold text-school-gold-foreground hover:bg-school-gold/90 sm:w-auto"
               asChild
             >
               <Link href="#contact">
@@ -40,7 +40,7 @@ export function Hero() {
             <Button
               size="lg"
               variant="outline"
-              className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
+              className="w-full border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 sm:w-auto"
               asChild
             >
               <Link href="/login/student">Portal Login</Link>

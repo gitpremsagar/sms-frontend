@@ -51,7 +51,7 @@ export function Navbar() {
 
         <button
           type="button"
-          className="inline-flex size-9 items-center justify-center rounded-md text-foreground md:hidden"
+          className="inline-flex size-11 items-center justify-center rounded-md text-foreground md:hidden"
           onClick={() => setMobileOpen((open) => !open)}
           aria-expanded={mobileOpen}
           aria-label={mobileOpen ? "Close menu" : "Open menu"}

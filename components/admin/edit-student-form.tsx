@@ -12,11 +12,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FormActions } from "@/components/ui/form-actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
 import type { SchoolClass } from "@/lib/classes";
 import { type Student, updateStudent } from "@/lib/students";
+
+const selectClassName =
+  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30";
 
 type EditStudentFormProps = {
   student: Student;
@@ -96,75 +100,77 @@ export function EditStudentForm({ student, classes }: EditStudentFormProps) {
             </Alert>
           ) : null}
 
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              required
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="password">New Password (optional)</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                minLength={6}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="studentRollNumber">Roll Number</Label>
+              <Input
+                id="studentRollNumber"
+                value={studentRollNumber}
+                onChange={(event) => setStudentRollNumber(event.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="classId">Class</Label>
+              <select
+                id="classId"
+                value={classId}
+                onChange={(event) => setClassId(event.target.value)}
+                required
+                className={selectClassName}
+              >
+                {classes.map((schoolClass) => (
+                  <option key={schoolClass.id} value={schoolClass.id}>
+                    {schoolClass.className} ({schoolClass.teacherName})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">New Password (optional)</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              minLength={6}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="studentRollNumber">Roll Number</Label>
-            <Input
-              id="studentRollNumber"
-              value={studentRollNumber}
-              onChange={(event) => setStudentRollNumber(event.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="classId">Class</Label>
-            <select
-              id="classId"
-              value={classId}
-              onChange={(event) => setClassId(event.target.value)}
-              required
-              className="flex h-7 w-full rounded-md border border-input bg-transparent px-2 text-xs/relaxed outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
-            >
-              {classes.map((schoolClass) => (
-                <option key={schoolClass.id} value={schoolClass.id}>
-                  {schoolClass.className} ({schoolClass.teacherName})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex gap-3">
+          <FormActions>
             <Button type="submit" disabled={loading}>
               {loading ? "Saving..." : "Save Changes"}
             </Button>
             <Button variant="outline" asChild>
               <Link href="/admin">Cancel</Link>
             </Button>
-          </div>
+          </FormActions>
         </form>
       </CardContent>
     </Card>

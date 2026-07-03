@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { EditClassForm } from "@/components/admin/edit-class-form";
+import { BackLink } from "@/components/ui/back-link";
 import { getClassById } from "@/lib/classes.server";
 import { requireRole } from "@/lib/require-role";
 import { getTeachers } from "@/lib/teachers.server";
@@ -17,13 +17,8 @@ export default async function EditClassPage({ params }: EditClassPageProps) {
   ]);
 
   return (
-    <div className="space-y-6">
-      <Link
-        href="/admin"
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← Back to Admin Dashboard
-      </Link>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <BackLink href="/admin">← Back to Admin Dashboard</BackLink>
       <EditClassForm schoolClass={schoolClass} teachers={teachers} />
     </div>
   );

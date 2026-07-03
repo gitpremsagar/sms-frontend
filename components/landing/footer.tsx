@@ -28,7 +28,7 @@ export function Footer() {
             </p>
           </div>
 
-          <div className="flex gap-12">
+          <div className="grid grid-cols-1 gap-8 min-[400px]:grid-cols-2 sm:flex sm:gap-12">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Quick Links

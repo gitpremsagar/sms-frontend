@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { AddClassForm } from "@/components/admin/add-class-form";
+import { BackLink } from "@/components/ui/back-link";
 import { requireRole } from "@/lib/require-role";
 import { getTeachers } from "@/lib/teachers.server";
 
@@ -8,13 +8,8 @@ export default async function AddClassPage() {
   const teachers = await getTeachers();
 
   return (
-    <div className="space-y-6">
-      <Link
-        href="/admin"
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← Back to Admin Dashboard
-      </Link>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <BackLink href="/admin">← Back to Admin Dashboard</BackLink>
       <AddClassForm teachers={teachers} />
     </div>
   );

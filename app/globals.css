@@ -128,9 +128,25 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-base text-foreground;
   }
   html {
     @apply font-sans scroll-smooth;
+  }
+}
+
+@layer utilities {
+  .scroll-hint {
+    position: relative;
+  }
+  .scroll-hint::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1.5rem;
+    pointer-events: none;
+    background: linear-gradient(to left, var(--background), transparent);
   }
 }
