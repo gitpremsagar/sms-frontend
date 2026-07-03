@@ -43,7 +43,7 @@ export function LoginForm({ expectedRole, title, description }: LoginFormProps) 
     try {
       const user = await login(email, password, expectedRole);
       dispatch(setUser(user));
-      router.push(ROLE_HOME[expectedRole]);
+      router.push(ROLE_HOME[user.role]);
       router.refresh();
     } catch (err) {
       if (err instanceof ApiError) {

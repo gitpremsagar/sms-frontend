@@ -1,6 +1,9 @@
 import { LoginForm } from "@/components/auth/login-form";
+import { redirectIfAuthenticated } from "@/lib/redirect-if-authenticated";
 
-export default function StudentLoginPage() {
+export default async function StudentLoginPage() {
+  await redirectIfAuthenticated();
+
   return (
     <LoginForm
       expectedRole="STUDENT"

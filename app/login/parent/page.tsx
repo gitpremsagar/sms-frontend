@@ -1,6 +1,9 @@
 import { LoginForm } from "@/components/auth/login-form";
+import { redirectIfAuthenticated } from "@/lib/redirect-if-authenticated";
 
-export default function ParentLoginPage() {
+export default async function ParentLoginPage() {
+  await redirectIfAuthenticated();
+
   return (
     <LoginForm
       expectedRole="PARENT"
