@@ -18,6 +18,7 @@ import {
   type AttendanceRecord,
   type AttendanceStatus,
   type RegisterTeacher,
+  classifyDay,
   getCellSymbol,
   getCurrentTimeValue,
   markAbsent,
@@ -26,6 +27,7 @@ import {
   undoAttendance,
 } from "@/lib/attendance";
 import { ApiError } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 type AttendanceCellModalProps = {
   open: boolean;
@@ -73,6 +75,10 @@ export function AttendanceCellModal({
   const hasRecord = Boolean(record);
   const hasPunchIn = Boolean(record?.punchIn);
   const hasPunchOut = Boolean(record?.punchOut);
+  const dayMetrics =
+    record?.status === "PRESENT" && teacher
+      ? classifyDay(record, teacher, isHoliday)
+      : null;
 
   useEffect(() => {
     if (open) {
@@ -140,6 +146,30 @@ export function AttendanceCellModal({
                 <p className="font-medium">{formatTime(record?.punchOut ?? null)}</p>
               </div>
             </div>
+
+            {dayMetrics && (
+              <div className="flex flex-wrap gap-2">
+                {dayMetrics.isLatePunchIn && (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                    Late punch in
+                  </span>
+                )}
+                {dayMetrics.isHalfDay && (
+                  <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-950/40 dark:text-violet-400">
+                    Half day
+                  </span>
+                )}
+                {dayMetrics.isEarlyExit && (
+                  <span
+                    className={cn(
+                      "rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700 dark:bg-sky-950/40 dark:text-sky-400",
+                    )}
+                  >
+                    Early exit
+                  </span>
+                )}
+              </div>
+            )}
 
             {error && (
               <Alert variant="destructive">

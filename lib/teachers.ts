@@ -7,6 +7,9 @@ export type Teacher = {
   email: string;
   employeeId: string | null;
   phone: string | null;
+  workStartTime: string;
+  workEndTime: string;
+  halfDayThresholdTime: string;
   createdAt: string;
 };
 
@@ -16,6 +19,9 @@ export type CreateTeacherInput = {
   password: string;
   employeeId?: string;
   phone?: string;
+  workStartTime?: string;
+  workEndTime?: string;
+  halfDayThresholdTime?: string;
 };
 
 export type UpdateTeacherInput = {
@@ -24,6 +30,9 @@ export type UpdateTeacherInput = {
   password?: string;
   employeeId?: string | null;
   phone?: string | null;
+  workStartTime?: string;
+  workEndTime?: string;
+  halfDayThresholdTime?: string;
 };
 
 export async function createTeacher(

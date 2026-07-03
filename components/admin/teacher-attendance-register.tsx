@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AttendanceCellModal } from "@/components/admin/attendance-cell-modal";
+import { TeacherAttendanceMobile } from "@/components/admin/teacher-attendance-mobile";
+import { BackLink } from "@/components/ui/back-link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +18,7 @@ import {
   type AttendanceRegister,
   type CellSymbol,
   type RegisterTeacher,
-  countPresentDays,
+  getTeacherSummary,
   declareHoliday,
   formatDate,
   getCellSymbol,
@@ -152,13 +153,8 @@ export function TeacherAttendanceRegister({
     : undefined;
 
   return (
-    <div className="-mx-4 space-y-6 px-4 sm:mx-0 sm:px-0">
-      <Link
-        href="/admin"
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← Back to Admin Dashboard
-      </Link>
+    <div className="space-y-6">
+      <BackLink href="/admin">← Back to Admin Dashboard</BackLink>
 
       <Card>
         <CardHeader>
@@ -223,8 +219,9 @@ export function TeacherAttendanceRegister({
               No teachers found. Add teachers before managing attendance.
             </p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border">
-              <table className="w-full min-w-[900px] border-collapse text-sm">
+            <>
+            <div className="scroll-hint hidden overflow-x-auto rounded-lg border md:block">
+              <table className="w-full min-w-[1100px] border-collapse text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40 text-left text-muted-foreground">
                     <th className="sticky left-0 z-10 min-w-[160px] border-r bg-muted/40 px-3 py-2 font-medium">
@@ -264,8 +261,17 @@ export function TeacherAttendanceRegister({
                         </th>
                       );
                     })}
-                    <th className="min-w-[72px] px-3 py-2 text-center font-medium">
+                    <th className="min-w-[56px] px-2 py-2 text-center font-medium">
                       Present
+                    </th>
+                    <th className="min-w-[56px] px-2 py-2 text-center font-medium">
+                      Absent
+                    </th>
+                    <th className="min-w-[56px] px-2 py-2 text-center font-medium">
+                      Late
+                    </th>
+                    <th className="min-w-[56px] px-2 py-2 text-center font-medium">
+                      Half Day
                     </th>
                   </tr>
                 </thead>
@@ -304,23 +310,38 @@ export function TeacherAttendanceRegister({
                           );
                         },
                       )}
-                      <td className="px-3 py-2 text-center font-medium">
-                        {countPresentDays(
-                          teacher.id,
-                          register.daysInMonth,
-                          register.year,
-                          register.month,
-                          register.records,
-                        )}
+                      <td className="px-2 py-2 text-center font-medium text-emerald-600">
+                        {getTeacherSummary(register, teacher.id).present}
+                      </td>
+                      <td className="px-2 py-2 text-center font-medium text-orange-700">
+                        {getTeacherSummary(register, teacher.id).absent}
+                      </td>
+                      <td className="px-2 py-2 text-center font-medium text-amber-600">
+                        {getTeacherSummary(register, teacher.id).latePunchIn}
+                      </td>
+                      <td className="px-2 py-2 text-center font-medium text-violet-600">
+                        {getTeacherSummary(register, teacher.id).halfDay}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+
+            <div className="md:hidden">
+              <TeacherAttendanceMobile
+                register={register}
+                holidaySet={holidaySet}
+                declaredHolidaySet={declaredHolidaySet}
+                holidayLoading={holidayLoading}
+                onCellClick={openCell}
+                onToggleHoliday={(day) => void toggleHoliday(day)}
+              />
+            </div>
+            </>
           )}
 
-          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+          <div className="hidden flex-wrap gap-4 text-xs text-muted-foreground md:flex">
             <span>
               <span className="font-semibold text-emerald-600">P</span> Present
             </span>
@@ -335,6 +356,10 @@ export function TeacherAttendanceRegister({
             </span>
             <span>
               <span className="font-semibold">-</span> Not Marked
+            </span>
+            <span className="text-muted-foreground/80">
+              Late and Half Day are derived from punch times vs each teacher&apos;s
+              schedule.
             </span>
           </div>
         </CardContent>
