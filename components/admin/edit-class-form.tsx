@@ -41,7 +41,7 @@ export function EditClassForm({ schoolClass, teachers }: EditClassFormProps) {
 
     try {
       await updateClass(schoolClass.id, { className, teacherId });
-      router.push("/admin");
+      router.push("/admin/classes");
       router.refresh();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -124,7 +124,7 @@ export function EditClassForm({ schoolClass, teachers }: EditClassFormProps) {
               {loading ? "Saving..." : "Save Changes"}
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/admin">Cancel</Link>
+              <Link href="/admin/classes">Cancel</Link>
             </Button>
           </FormActions>
         </form>

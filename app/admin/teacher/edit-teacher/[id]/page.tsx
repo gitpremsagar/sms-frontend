@@ -14,7 +14,7 @@ export default async function EditTeacherPage({ params }: EditTeacherPageProps) 
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <BackLink href="/admin">← Back to Admin Dashboard</BackLink>
+      <BackLink href="/admin/teachers">← Back to Teachers</BackLink>
       <EditTeacherForm teacher={teacher} />
     </div>
   );

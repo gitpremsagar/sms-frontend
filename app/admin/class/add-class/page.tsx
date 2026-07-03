@@ -9,7 +9,7 @@ export default async function AddClassPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <BackLink href="/admin">← Back to Admin Dashboard</BackLink>
+      <BackLink href="/admin/classes">← Back to Classes</BackLink>
       <AddClassForm teachers={teachers} />
     </div>
   );

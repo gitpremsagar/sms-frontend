@@ -7,7 +7,7 @@ export default async function AddTeacherPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <BackLink href="/admin">← Back to Admin Dashboard</BackLink>
+      <BackLink href="/admin/teachers">← Back to Teachers</BackLink>
       <AddTeacherForm />
     </div>
   );

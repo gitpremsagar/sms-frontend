@@ -2,48 +2,58 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
+  Bell,
   BookOpen,
-  CalendarCheck,
+  GraduationCap,
   LogOut,
   Menu,
+  Users,
   X,
-  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/ui/page-container";
 import { logout } from "@/lib/auth-client";
-import { apiFetch } from "@/lib/api";
 import { ROLE_LABELS } from "@/lib/roles";
 import { schoolContent } from "@/lib/school-content";
-import type { TeacherNotification } from "@/lib/teacher";
 import { clearUser } from "@/store/auth-slice";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { cn } from "@/lib/utils";
 
-type TeacherPortalShellProps = {
+type AdminPortalShellProps = {
   children: React.ReactNode;
 };
 
 const NAV_ITEMS = [
   {
-    href: "/teacher/attendance",
-    label: "Attendance Register",
-    icon: CalendarCheck,
-    match: (path: string) => path.startsWith("/teacher/attendance"),
+    href: "/admin/teachers",
+    label: "Teachers",
+    icon: GraduationCap,
+    match: (path: string) =>
+      path === "/admin" ||
+      path.startsWith("/admin/teachers") ||
+      path.startsWith("/admin/teacher"),
   },
   {
-    href: "/teacher/notifications",
+    href: "/admin/classes",
+    label: "Classes",
+    icon: BookOpen,
+    match: (path: string) =>
+      path.startsWith("/admin/classes") || path.startsWith("/admin/class"),
+  },
+  {
+    href: "/admin/students",
+    label: "Students",
+    icon: Users,
+    match: (path: string) =>
+      path.startsWith("/admin/students") || path.startsWith("/admin/student"),
+  },
+  {
+    href: "/admin/notifications",
     label: "Notifications",
     icon: Bell,
-    match: (path: string) => path.startsWith("/teacher/notifications"),
-  },
-  {
-    href: "/teacher/class",
-    label: "Class",
-    icon: BookOpen,
-    match: (path: string) => path.startsWith("/teacher/class"),
+    match: (path: string) => path.startsWith("/admin/notifications"),
   },
 ] as const;
 
@@ -58,11 +68,9 @@ function getInitials(name: string): string {
 
 function NavLinks({
   pathname,
-  unreadCount,
   onNavigate,
 }: {
   pathname: string;
-  unreadCount: number;
   onNavigate?: () => void;
 }) {
   return (
@@ -84,19 +92,7 @@ function NavLinks({
             )}
           >
             <Icon className="size-4 shrink-0" />
-            <span className="flex-1">{item.label}</span>
-            {item.href === "/teacher/notifications" && unreadCount > 0 ? (
-              <span
-                className={cn(
-                  "rounded-full px-1.5 py-0.5 text-xs font-semibold",
-                  isActive
-                    ? "bg-white/20 text-white"
-                    : "bg-school-navy/10 text-school-navy",
-                )}
-              >
-                {unreadCount}
-              </span>
-            ) : null}
+            <span>{item.label}</span>
           </Link>
         );
       })}
@@ -104,47 +100,13 @@ function NavLinks({
   );
 }
 
-export function TeacherPortalShell({ children }: TeacherPortalShellProps) {
+export function AdminPortalShell({ children }: AdminPortalShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const [loading, setLoading] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const isFullWidthPage = pathname.startsWith("/teacher/attendance");
-
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    let cancelled = false;
-
-    async function loadUnreadCount() {
-      try {
-        const data = await apiFetch<{ notifications: TeacherNotification[] }>(
-          "/api/teacher/notifications",
-        );
-        if (!cancelled) {
-          setUnreadCount(
-            data.notifications.filter((notification) => !notification.read)
-              .length,
-          );
-        }
-      } catch {
-        if (!cancelled) {
-          setUnreadCount(0);
-        }
-      }
-    }
-
-    void loadUnreadCount();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, pathname]);
 
   async function handleLogout() {
     setLoading(true);
@@ -169,7 +131,7 @@ export function TeacherPortalShell({ children }: TeacherPortalShellProps) {
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-40 border-b bg-background/95 pt-[env(safe-area-inset-top)] shadow-sm backdrop-blur supports-backdrop-filter:bg-background/80">
-        <PageContainer className="py-0! px-4 sm:px-6" fullWidth={isFullWidthPage}>
+        <PageContainer className="py-0! px-4 sm:px-6">
           <div className="flex h-11 items-center justify-between gap-3 sm:h-12">
             <div className="flex min-w-0 items-center gap-2">
               <Button
@@ -186,7 +148,7 @@ export function TeacherPortalShell({ children }: TeacherPortalShellProps) {
                 )}
               </Button>
               <Link
-                href="/teacher"
+                href="/admin/teachers"
                 className="min-w-0 truncate text-sm font-medium text-school-navy"
               >
                 {schoolContent.name}
@@ -231,21 +193,20 @@ export function TeacherPortalShell({ children }: TeacherPortalShellProps) {
 
       {mobileNavOpen ? (
         <div className="border-b bg-background md:hidden">
-          <PageContainer className="py-2" fullWidth={isFullWidthPage}>
+          <PageContainer className="py-2">
             <NavLinks
               pathname={pathname}
-              unreadCount={unreadCount}
               onNavigate={() => setMobileNavOpen(false)}
             />
           </PageContainer>
         </div>
       ) : null}
 
-      <PageContainer className="py-6" fullWidth={isFullWidthPage}>
+      <PageContainer className="py-6">
         <div className="flex gap-6">
           <aside className="hidden w-56 shrink-0 md:block">
             <div className="sticky top-14 rounded-xl border bg-background p-3 shadow-sm">
-              <NavLinks pathname={pathname} unreadCount={unreadCount} />
+              <NavLinks pathname={pathname} />
             </div>
           </aside>
 

@@ -40,7 +40,7 @@ export function AddClassForm({ teachers }: AddClassFormProps) {
 
     try {
       await createClass({ className, teacherId });
-      router.push("/admin");
+      router.push("/admin/classes");
       router.refresh();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -123,7 +123,7 @@ export function AddClassForm({ teachers }: AddClassFormProps) {
               {loading ? "Creating..." : "Create Class"}
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/admin">Cancel</Link>
+              <Link href="/admin/classes">Cancel</Link>
             </Button>
           </FormActions>
         </form>

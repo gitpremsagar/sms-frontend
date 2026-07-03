@@ -1,4 +1,4 @@
-import { PortalShell } from "@/components/portal/portal-shell";
+import { AdminPortalShell } from "@/components/portal/admin-portal-shell";
 import { requireRole } from "@/lib/require-role";
 
 export default async function AdminLayout({
@@ -8,5 +8,5 @@ export default async function AdminLayout({
 }) {
   await requireRole("ADMIN");
 
-  return <PortalShell>{children}</PortalShell>;
+  return <AdminPortalShell>{children}</AdminPortalShell>;
 }

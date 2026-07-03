@@ -47,7 +47,7 @@ export function AddTeacherForm() {
         workEndTime,
         halfDayThresholdTime,
       });
-      router.push("/admin");
+      router.push("/admin/teachers");
       router.refresh();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -170,7 +170,7 @@ export function AddTeacherForm() {
               {loading ? "Creating..." : "Create Teacher"}
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/admin">Cancel</Link>
+              <Link href="/admin/teachers">Cancel</Link>
             </Button>
           </FormActions>
         </form>

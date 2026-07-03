@@ -55,7 +55,7 @@ export function PortalShell({ children }: PortalShellProps) {
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-40 border-b bg-background/95 pt-[env(safe-area-inset-top)] shadow-sm backdrop-blur supports-backdrop-filter:bg-background/80">
-        <PageContainer className="!py-0 px-4 sm:px-6">
+        <PageContainer className="py-0! px-4 sm:px-6">
           <div className="flex h-11 items-center justify-between gap-3 sm:h-12">
             <Link
               href="/"

@@ -18,7 +18,7 @@ export default async function EditStudentPage({ params }: EditStudentPageProps) 
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <BackLink href="/admin">← Back to Admin Dashboard</BackLink>
+      <BackLink href="/admin/students">← Back to Students</BackLink>
       <EditStudentForm student={student} classes={classes} />
     </div>
   );

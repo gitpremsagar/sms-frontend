@@ -52,7 +52,7 @@ export function EditStudentForm({ student, classes }: EditStudentFormProps) {
         studentRollNumber,
         classId,
       });
-      router.push("/admin");
+      router.push("/admin/students");
       router.refresh();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -76,7 +76,7 @@ export function EditStudentForm({ student, classes }: EditStudentFormProps) {
         </CardHeader>
         <CardContent>
           <Button variant="outline" asChild>
-            <Link href="/admin">Back to Admin Dashboard</Link>
+            <Link href="/admin/students">Back to Students</Link>
           </Button>
         </CardContent>
       </Card>
@@ -168,7 +168,7 @@ export function EditStudentForm({ student, classes }: EditStudentFormProps) {
               {loading ? "Saving..." : "Save Changes"}
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/admin">Cancel</Link>
+              <Link href="/admin/students">Cancel</Link>
             </Button>
           </FormActions>
         </form>
