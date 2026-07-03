@@ -185,9 +185,31 @@ function parseTimeToMinutes(time: string): number {
   return (hours ?? 0) * 60 + (minutes ?? 0);
 }
 
+export function formatPunchTime(iso: string | null): string {
+  if (!iso) {
+    return "—";
+  }
+
+  return new Date(iso).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC",
+  });
+}
+
+/** HH:mm for `<input type="time">`, matching stored wall-clock values. */
+export function getPunchTimeInputValue(iso: string | null): string {
+  if (!iso) {
+    return getCurrentTimeValue();
+  }
+
+  const date = new Date(iso);
+  return `${String(date.getUTCHours()).padStart(2, "0")}:${String(date.getUTCMinutes()).padStart(2, "0")}`;
+}
+
 function getPunchMinutes(iso: string): number {
   const date = new Date(iso);
-  return date.getHours() * 60 + date.getMinutes();
+  return date.getUTCHours() * 60 + date.getUTCMinutes();
 }
 
 export function classifyDay(

@@ -19,8 +19,10 @@ import {
   type AttendanceStatus,
   type RegisterTeacher,
   classifyDay,
+  formatPunchTime,
   getCellSymbol,
   getCurrentTimeValue,
+  getPunchTimeInputValue,
   markAbsent,
   punchIn,
   punchOut,
@@ -44,17 +46,6 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
   PRESENT: "Present",
   ABSENT: "Absent",
 };
-
-function formatTime(iso: string | null): string {
-  if (!iso) {
-    return "—";
-  }
-
-  return new Date(iso).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export function AttendanceCellModal({
   open,
@@ -82,11 +73,11 @@ export function AttendanceCellModal({
 
   useEffect(() => {
     if (open) {
-      setPunchInTime(getCurrentTimeValue());
-      setPunchOutTime(getCurrentTimeValue());
+      setPunchInTime(getPunchTimeInputValue(record?.punchIn ?? null));
+      setPunchOutTime(getPunchTimeInputValue(record?.punchOut ?? null));
       setError(null);
     }
-  }, [open, teacher?.id, date]);
+  }, [open, teacher?.id, date, record?.punchIn, record?.punchOut]);
 
   async function runAction(
     action: string,
@@ -139,11 +130,11 @@ export function AttendanceCellModal({
               </div>
               <div>
                 <p className="text-muted-foreground">Punch In</p>
-                <p className="font-medium">{formatTime(record?.punchIn ?? null)}</p>
+                <p className="font-medium">{formatPunchTime(record?.punchIn ?? null)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Punch Out</p>
-                <p className="font-medium">{formatTime(record?.punchOut ?? null)}</p>
+                <p className="font-medium">{formatPunchTime(record?.punchOut ?? null)}</p>
               </div>
             </div>
 

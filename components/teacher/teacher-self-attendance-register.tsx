@@ -16,6 +16,7 @@ import {
   type RegisterTeacher,
   classifyDay,
   formatDate,
+  formatPunchTime,
   getTeacherSummary,
   isSunday,
   recordKey,
@@ -85,17 +86,6 @@ const thClassName =
 
 const tdClassName = "border border-border px-3 py-2 text-xs whitespace-nowrap";
 
-function formatTime(iso: string | null): string {
-  if (!iso) {
-    return "—";
-  }
-
-  return new Date(iso).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function yesNo(value: boolean): string {
   return value ? "Yes" : "No";
 }
@@ -161,8 +151,8 @@ function buildAttendanceRows(
       dayLabel: DAY_NAMES[weekday] ?? "—",
       displayDate: formatDisplayDate(day, register.month, register.year),
       status: getStatusLabel(isHoliday, isDeclaredHoliday, record),
-      punchIn: isHoliday ? "—" : formatTime(record?.punchIn ?? null),
-      punchOut: isHoliday ? "—" : formatTime(record?.punchOut ?? null),
+      punchIn: isHoliday ? "—" : formatPunchTime(record?.punchIn ?? null),
+      punchOut: isHoliday ? "—" : formatPunchTime(record?.punchOut ?? null),
       late: isHoliday ? "—" : yesNo(metrics?.isLatePunchIn ?? false),
       halfDay: isHoliday ? "—" : yesNo(metrics?.isHalfDay ?? false),
       earlyExit: isHoliday ? "—" : yesNo(metrics?.isEarlyExit ?? false),
