@@ -15,6 +15,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   type AttendanceRegister,
   type CellSymbol,
   type RegisterTeacher,
@@ -54,8 +62,28 @@ type SelectedCell = {
   dateLabel: string;
 };
 
+type HolidayAction = "declare" | "remove";
+
 const selectClassName =
   "h-8 rounded-md border border-input bg-background px-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30";
+
+function formatHolidayLabel(year: number, month: number, day: number): string {
+  return `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
+}
+
+function dateHeaderClassName(isSundayColumn: boolean, isDeclared: boolean): string {
+  return cn(
+    "min-w-8 border-r px-1 py-2 text-center text-xs font-medium",
+    isSundayColumn &&
+      "cursor-default bg-emerald-50 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300",
+    isDeclared &&
+      !isSundayColumn &&
+      "cursor-pointer bg-violet-100 text-violet-800 ring-1 ring-inset ring-violet-300 hover:bg-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-700 dark:hover:bg-violet-950/60",
+    !isSundayColumn &&
+      !isDeclared &&
+      "cursor-pointer hover:bg-muted/60",
+  );
+}
 
 function cellClassName(symbol: CellSymbol, isHolidayColumn: boolean): string {
   return cn(
@@ -81,6 +109,8 @@ export function TeacherAttendanceRegister({
   const [modalOpen, setModalOpen] = useState(false);
   const [holidayLoading, setHolidayLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pendingHolidayDay, setPendingHolidayDay] = useState<number | null>(null);
+  const [holidayConfirmOpen, setHolidayConfirmOpen] = useState(false);
 
   const yearOptions = useMemo(
     () => Array.from({ length: 5 }, (_, index) => currentYear - 2 + index),
@@ -96,6 +126,20 @@ export function TeacherAttendanceRegister({
     () => new Set(register.declaredHolidays),
     [register.declaredHolidays],
   );
+
+  const pendingHolidayAction: HolidayAction | null =
+    pendingHolidayDay === null
+      ? null
+      : declaredHolidaySet.has(
+            formatDate(register.year, register.month, pendingHolidayDay),
+          )
+        ? "remove"
+        : "declare";
+
+  const pendingHolidayLabel =
+    pendingHolidayDay === null
+      ? ""
+      : formatHolidayLabel(register.year, register.month, pendingHolidayDay);
 
   function applyFilters(): void {
     const params = new URLSearchParams({
@@ -119,32 +163,52 @@ export function TeacherAttendanceRegister({
     setSelectedCell({
       teacher,
       date,
-      dateLabel: `${MONTH_NAMES[register.month - 1]} ${day}, ${register.year}`,
+      dateLabel: formatHolidayLabel(register.year, register.month, day),
     });
     setModalOpen(true);
   }
 
-  async function toggleHoliday(day: number): Promise<void> {
+  function requestHolidayToggle(day: number): void {
     const date = formatDate(register.year, register.month, day);
 
     if (isSunday(date)) {
       return;
     }
 
+    setPendingHolidayDay(day);
+    setHolidayConfirmOpen(true);
+  }
+
+  async function confirmHolidayChange(): Promise<void> {
+    if (pendingHolidayDay === null || pendingHolidayAction === null) {
+      return;
+    }
+
+    const date = formatDate(register.year, register.month, pendingHolidayDay);
+
     setHolidayLoading(date);
     setError(null);
+    setHolidayConfirmOpen(false);
 
     try {
-      if (declaredHolidaySet.has(date)) {
+      if (pendingHolidayAction === "remove") {
         await removeHoliday(date);
       } else {
         await declareHoliday(date);
       }
+      setPendingHolidayDay(null);
       router.refresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to update holiday");
     } finally {
       setHolidayLoading(null);
+    }
+  }
+
+  function handleHolidayConfirmOpenChange(open: boolean): void {
+    setHolidayConfirmOpen(open);
+    if (!open) {
+      setPendingHolidayDay(null);
     }
   }
 
@@ -163,7 +227,8 @@ export function TeacherAttendanceRegister({
           </CardTitle>
           <CardDescription>
             Monthly register — all teachers. Click any cell to edit attendance.
-            Click a date header to declare or remove a holiday.
+            Click a date number in the column header to declare or remove a
+            holiday; you will be asked to confirm before the change is applied.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -220,67 +285,20 @@ export function TeacherAttendanceRegister({
             </p>
           ) : (
             <>
-            <div className="scroll-hint hidden overflow-x-auto rounded-lg border md:block">
-              <table className="w-full min-w-[1100px] border-collapse text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/40 text-left text-muted-foreground">
-                    <th className="sticky left-0 z-10 min-w-[160px] border-r bg-muted/40 px-3 py-2 font-medium">
-                      Name
-                    </th>
-                    {Array.from({ length: register.daysInMonth }, (_, index) => {
-                      const day = index + 1;
-                      const date = formatDate(register.year, register.month, day);
-                      const isHolidayColumn = holidaySet.has(date);
-                      const isSundayColumn = isSunday(date);
-                      const isDeclared = declaredHolidaySet.has(date);
+              <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                To declare a holiday, click a{" "}
+                <span className="font-medium text-foreground">date number</span>{" "}
+                in the column header. Sundays are automatic holidays and cannot
+                be changed. Declared holidays are highlighted in violet.
+              </div>
 
-                      return (
-                        <th
-                          key={day}
-                          className={cn(
-                            "min-w-8 border-r px-1 py-2 text-center text-xs font-medium",
-                            isHolidayColumn &&
-                              "bg-emerald-50 dark:bg-emerald-950/20",
-                            !isSundayColumn &&
-                              "cursor-pointer hover:bg-muted/60",
-                          )}
-                          onClick={() => {
-                            if (!isSundayColumn) {
-                              void toggleHoliday(day);
-                            }
-                          }}
-                          title={
-                            isSundayColumn
-                              ? "Sunday (automatic holiday)"
-                              : isDeclared
-                                ? "Click to remove holiday"
-                                : "Click to declare holiday"
-                          }
-                        >
-                          {holidayLoading === date ? "…" : day}
-                        </th>
-                      );
-                    })}
-                    <th className="min-w-[56px] px-2 py-2 text-center font-medium">
-                      Present
-                    </th>
-                    <th className="min-w-[56px] px-2 py-2 text-center font-medium">
-                      Absent
-                    </th>
-                    <th className="min-w-[56px] px-2 py-2 text-center font-medium">
-                      Late
-                    </th>
-                    <th className="min-w-[56px] px-2 py-2 text-center font-medium">
-                      Half Day
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {register.teachers.map((teacher) => (
-                    <tr key={teacher.id} className="border-b last:border-0">
-                      <td className="sticky left-0 z-10 border-r bg-background px-3 py-2 font-medium">
-                        {teacher.name}
-                      </td>
+              <div className="scroll-hint hidden overflow-x-auto rounded-lg border md:block">
+                <table className="w-full min-w-[1100px] border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/40 text-left text-muted-foreground">
+                      <th className="sticky left-0 z-10 min-w-[160px] border-r bg-muted/40 px-3 py-2 font-medium">
+                        Name
+                      </th>
                       {Array.from(
                         { length: register.daysInMonth },
                         (_, index) => {
@@ -290,54 +308,125 @@ export function TeacherAttendanceRegister({
                             register.month,
                             day,
                           );
-                          const record =
-                            register.records[recordKey(teacher.id, date)];
-                          const symbol = getCellSymbol(
-                            date,
-                            register.holidays,
-                            record,
-                          );
-                          const isHolidayColumn = holidaySet.has(date);
+                          const isSundayColumn = isSunday(date);
+                          const isDeclared = declaredHolidaySet.has(date);
 
                           return (
-                            <td
+                            <th
                               key={day}
-                              className={cellClassName(symbol, isHolidayColumn)}
-                              onClick={() => openCell(teacher, day)}
+                              className={dateHeaderClassName(
+                                isSundayColumn,
+                                isDeclared,
+                              )}
+                              onClick={() => {
+                                if (!isSundayColumn) {
+                                  requestHolidayToggle(day);
+                                }
+                              }}
+                              title={
+                                isSundayColumn
+                                  ? "Sunday (automatic holiday)"
+                                  : isDeclared
+                                    ? "Click to remove holiday"
+                                    : "Click to declare holiday"
+                              }
                             >
-                              {symbol}
-                            </td>
+                              {holidayLoading === date ? (
+                                "…"
+                              ) : isDeclared && !isSundayColumn ? (
+                                <span className="inline-flex flex-col items-center leading-tight">
+                                  <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400">
+                                    H
+                                  </span>
+                                  <span>{day}</span>
+                                </span>
+                              ) : (
+                                day
+                              )}
+                            </th>
                           );
                         },
                       )}
-                      <td className="px-2 py-2 text-center font-medium text-emerald-600">
-                        {getTeacherSummary(register, teacher.id).present}
-                      </td>
-                      <td className="px-2 py-2 text-center font-medium text-orange-700">
-                        {getTeacherSummary(register, teacher.id).absent}
-                      </td>
-                      <td className="px-2 py-2 text-center font-medium text-amber-600">
-                        {getTeacherSummary(register, teacher.id).latePunchIn}
-                      </td>
-                      <td className="px-2 py-2 text-center font-medium text-violet-600">
-                        {getTeacherSummary(register, teacher.id).halfDay}
-                      </td>
+                      <th className="min-w-[56px] px-2 py-2 text-center font-medium">
+                        Present
+                      </th>
+                      <th className="min-w-[56px] px-2 py-2 text-center font-medium">
+                        Absent
+                      </th>
+                      <th className="min-w-[56px] px-2 py-2 text-center font-medium">
+                        Late
+                      </th>
+                      <th className="min-w-[56px] px-2 py-2 text-center font-medium">
+                        Half Day
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {register.teachers.map((teacher) => (
+                      <tr key={teacher.id} className="border-b last:border-0">
+                        <td className="sticky left-0 z-10 border-r bg-background px-3 py-2 font-medium">
+                          {teacher.name}
+                        </td>
+                        {Array.from(
+                          { length: register.daysInMonth },
+                          (_, index) => {
+                            const day = index + 1;
+                            const date = formatDate(
+                              register.year,
+                              register.month,
+                              day,
+                            );
+                            const record =
+                              register.records[recordKey(teacher.id, date)];
+                            const symbol = getCellSymbol(
+                              date,
+                              register.holidays,
+                              record,
+                            );
+                            const isHolidayColumn = holidaySet.has(date);
 
-            <div className="md:hidden">
-              <TeacherAttendanceMobile
-                register={register}
-                holidaySet={holidaySet}
-                declaredHolidaySet={declaredHolidaySet}
-                holidayLoading={holidayLoading}
-                onCellClick={openCell}
-                onToggleHoliday={(day) => void toggleHoliday(day)}
-              />
-            </div>
+                            return (
+                              <td
+                                key={day}
+                                className={cellClassName(
+                                  symbol,
+                                  isHolidayColumn,
+                                )}
+                                onClick={() => openCell(teacher, day)}
+                              >
+                                {symbol}
+                              </td>
+                            );
+                          },
+                        )}
+                        <td className="px-2 py-2 text-center font-medium text-emerald-600">
+                          {getTeacherSummary(register, teacher.id).present}
+                        </td>
+                        <td className="px-2 py-2 text-center font-medium text-orange-700">
+                          {getTeacherSummary(register, teacher.id).absent}
+                        </td>
+                        <td className="px-2 py-2 text-center font-medium text-amber-600">
+                          {getTeacherSummary(register, teacher.id).latePunchIn}
+                        </td>
+                        <td className="px-2 py-2 text-center font-medium text-violet-600">
+                          {getTeacherSummary(register, teacher.id).halfDay}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="md:hidden">
+                <TeacherAttendanceMobile
+                  register={register}
+                  holidaySet={holidaySet}
+                  declaredHolidaySet={declaredHolidaySet}
+                  holidayLoading={holidayLoading}
+                  onCellClick={openCell}
+                  onRequestHolidayToggle={requestHolidayToggle}
+                />
+              </div>
             </>
           )}
 
@@ -357,9 +446,22 @@ export function TeacherAttendanceRegister({
             <span>
               <span className="font-semibold">-</span> Not Marked
             </span>
+            <span className="text-muted-foreground/80">|</span>
+            <span>
+              <span className="inline-block rounded bg-emerald-50 px-1 text-emerald-800 dark:bg-emerald-950/20">
+                Sun
+              </span>{" "}
+              Sunday (automatic)
+            </span>
+            <span>
+              <span className="inline-block rounded bg-violet-100 px-1 text-violet-800 ring-1 ring-violet-300 dark:bg-violet-950/40 dark:text-violet-300">
+                H
+              </span>{" "}
+              Declared holiday (click header to remove)
+            </span>
             <span className="text-muted-foreground/80">
-              Late and Half Day are derived from punch times vs each teacher&apos;s
-              schedule.
+              Late and Half Day are derived from punch times vs each
+              teacher&apos;s schedule.
             </span>
           </div>
         </CardContent>
@@ -374,6 +476,58 @@ export function TeacherAttendanceRegister({
         record={selectedRecord}
         isHoliday={selectedCell ? holidaySet.has(selectedCell.date) : false}
       />
+
+      <Dialog
+        open={holidayConfirmOpen}
+        onOpenChange={handleHolidayConfirmOpenChange}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {pendingHolidayAction === "remove"
+                ? "Remove holiday"
+                : "Declare holiday"}
+            </DialogTitle>
+            <DialogDescription>
+              {pendingHolidayAction === "remove" ? (
+                <>
+                  Remove holiday for{" "}
+                  <span className="font-medium text-foreground">
+                    {pendingHolidayLabel}
+                  </span>
+                  ? Teachers will be able to have attendance recorded on this
+                  day again.
+                </>
+              ) : (
+                <>
+                  Declare{" "}
+                  <span className="font-medium text-foreground">
+                    {pendingHolidayLabel}
+                  </span>{" "}
+                  as a school holiday? Attendance cannot be edited on this day.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter showCloseButton={false}>
+            <Button
+              variant="outline"
+              onClick={() => handleHolidayConfirmOpenChange(false)}
+              disabled={holidayLoading !== null}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void confirmHolidayChange()}
+              disabled={holidayLoading !== null}
+            >
+              {pendingHolidayAction === "remove"
+                ? "Remove holiday"
+                : "Declare holiday"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

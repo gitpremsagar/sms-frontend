@@ -35,8 +35,23 @@ type TeacherAttendanceMobileProps = {
   declaredHolidaySet: Set<string>;
   holidayLoading: string | null;
   onCellClick: (teacher: RegisterTeacher, day: number) => void;
-  onToggleHoliday: (day: number) => void;
+  onRequestHolidayToggle: (day: number) => void;
 };
+
+function dateHeaderButtonClassName(
+  isSundayColumn: boolean,
+  isDeclared: boolean,
+): string {
+  return cn(
+    "rounded px-0.5 py-0.5 text-[10px] font-medium",
+    isSundayColumn &&
+      "cursor-default bg-emerald-50 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300",
+    isDeclared &&
+      !isSundayColumn &&
+      "cursor-pointer bg-violet-100 text-violet-800 ring-1 ring-inset ring-violet-300 hover:bg-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-700",
+    !isSundayColumn && !isDeclared && "cursor-pointer hover:bg-muted",
+  );
+}
 
 function cellClassName(symbol: CellSymbol, isHolidayColumn: boolean): string {
   return cn(
@@ -56,7 +71,7 @@ export function TeacherAttendanceMobile({
   declaredHolidaySet,
   holidayLoading,
   onCellClick,
-  onToggleHoliday,
+  onRequestHolidayToggle,
 }: TeacherAttendanceMobileProps) {
   const [selectedTeacherId, setSelectedTeacherId] = useState(
     register.teachers[0]?.id ?? "",
@@ -78,6 +93,12 @@ export function TeacherAttendanceMobile({
 
   return (
     <div className="space-y-4">
+      <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        Tap a <span className="font-medium text-foreground">date number</span>{" "}
+        above each cell to declare or remove a holiday. Sundays cannot be
+        changed. Violet headers are declared holidays.
+      </div>
+
       <div className="space-y-2">
         <label htmlFor="mobile-teacher" className="text-xs text-muted-foreground">
           Select Teacher
@@ -149,14 +170,10 @@ export function TeacherAttendanceMobile({
             <div key={day} className="flex flex-col gap-0.5">
               <button
                 type="button"
-                className={cn(
-                  "rounded px-0.5 py-0.5 text-[10px] font-medium",
-                  isHolidayColumn && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20",
-                  !isSundayColumn && "hover:bg-muted",
-                )}
+                className={dateHeaderButtonClassName(isSundayColumn, isDeclared)}
                 onClick={() => {
                   if (!isSundayColumn) {
-                    onToggleHoliday(day);
+                    onRequestHolidayToggle(day);
                   }
                 }}
                 title={
@@ -167,7 +184,18 @@ export function TeacherAttendanceMobile({
                       : "Tap to declare holiday"
                 }
               >
-                {holidayLoading === date ? "…" : day}
+                {holidayLoading === date ? (
+                  "…"
+                ) : isDeclared && !isSundayColumn ? (
+                  <span className="inline-flex flex-col items-center leading-tight">
+                    <span className="text-[8px] font-bold text-violet-600 dark:text-violet-400">
+                      H
+                    </span>
+                    <span>{day}</span>
+                  </span>
+                ) : (
+                  day
+                )}
               </button>
               <button
                 type="button"
@@ -212,6 +240,18 @@ export function TeacherAttendanceMobile({
             </span>
             <span>
               <span className="font-semibold">-</span> Not Marked
+            </span>
+            <span>
+              <span className="inline-block rounded bg-emerald-50 px-1 text-emerald-800 dark:bg-emerald-950/20">
+                Sun
+              </span>{" "}
+              Sunday (automatic)
+            </span>
+            <span>
+              <span className="inline-block rounded bg-violet-100 px-1 text-violet-800 ring-1 ring-violet-300 dark:bg-violet-950/40 dark:text-violet-300">
+                H
+              </span>{" "}
+              Declared holiday
             </span>
           </div>
         ) : null}
