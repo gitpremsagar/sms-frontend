@@ -1,11 +1,16 @@
 export function getApiBaseUrl(): string {
-  // if (typeof window !== "undefined") {
-  //   return "";
-  // }
+  // Browser: same-origin so auth cookies are set on the frontend domain.
+  if (typeof window !== "undefined") {
+    return "";
+  }
 
-  const baseUrl = process.env.NODE_ENV === "production" ? "https://smsapi.tataitsolutions.com" : "http://localhost:3000";
-
-  return baseUrl ?? "http://localhost:3000";
+  // Server: call through the Next.js app so rewrites proxy to the API.
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.NODE_ENV === "production"
+      ? "https://sms.tataitsolutions.com"
+      : "http://localhost:3000")
+  );
 }
 
 export async function apiFetch<T>(
@@ -13,7 +18,6 @@ export async function apiFetch<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const baseUrl = getApiBaseUrl();
-  console.log(`URL: \n${baseUrl}${path}`);
   const response = await fetch(`${baseUrl}${path}`, {
     ...options,
     credentials: "include",
