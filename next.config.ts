@@ -1,17 +1,15 @@
 import type { NextConfig } from "next";
 
-const backendUrl =
-  process.env.BACKEND_URL ??
-  (process.env.NODE_ENV === "production"
-    ? "https://smsapi.tataitsolutions.com"
-    : "http://localhost:3200");
-
 const nextConfig: NextConfig = {
   async rewrites() {
+    if (process.env.NODE_ENV === "production") {
+      return [];
+    }
+
     return [
       {
         source: "/api/:path*",
-        destination: `${backendUrl}/api/:path*`,
+        destination: "http://localhost:3200/api/:path*",
       },
     ];
   },

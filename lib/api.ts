@@ -1,16 +1,16 @@
+const productionApiUrl =
+  process.env.NEXT_PUBLIC_API_URL ?? "https://smsapi.tataitsolutions.com";
+
 export function getApiBaseUrl(): string {
-  // Browser: same-origin so auth cookies are set on the frontend domain.
+  if (process.env.NODE_ENV === "production") {
+    return productionApiUrl;
+  }
+
   if (typeof window !== "undefined") {
     return "";
   }
 
-  // Server: call through the Next.js app so rewrites proxy to the API.
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ??
-    (process.env.NODE_ENV === "production"
-      ? "https://sms.tataitsolutions.com"
-      : "http://localhost:3000")
-  );
+  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 }
 
 export async function apiFetch<T>(
