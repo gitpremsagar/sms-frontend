@@ -55,24 +55,23 @@ export function PortalShell({ children }: PortalShellProps) {
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-40 border-b bg-background/95 pt-[env(safe-area-inset-top)] shadow-sm backdrop-blur supports-backdrop-filter:bg-background/80">
-        <PageContainer className="py-0">
-          <div className="flex items-center justify-between gap-3 py-3 sm:py-4">
-            <div className="min-w-0">
-              <Link
-                href="/"
-                className="block truncate text-sm font-medium text-school-navy sm:text-base"
-              >
-                {schoolContent.name}
-              </Link>
-              <p className="truncate text-xs text-muted-foreground">
-                {ROLE_LABELS[user.role]} Portal
-              </p>
-            </div>
+        <PageContainer className="!py-0 px-4 sm:px-6">
+          <div className="flex h-11 items-center justify-between gap-3 sm:h-12">
+            <Link
+              href="/"
+              className="min-w-0 truncate text-sm font-medium text-school-navy"
+            >
+              {schoolContent.name}
+              <span className="font-normal text-muted-foreground">
+                {" "}
+                · {ROLE_LABELS[user.role]} Portal
+              </span>
+            </Link>
 
-            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <div className="flex shrink-0 items-center gap-2">
               <div className="hidden items-center gap-2 sm:flex">
                 <span
-                  className="flex size-8 items-center justify-center rounded-full bg-school-navy/10 text-xs font-semibold text-school-navy"
+                  className="flex size-7 items-center justify-center rounded-full bg-school-navy/10 text-[10px] font-semibold text-school-navy"
                   title={user.name}
                 >
                   {getInitials(user.name)}
@@ -81,15 +80,12 @@ export function PortalShell({ children }: PortalShellProps) {
                   {user.name}
                 </span>
               </div>
-              <span className="hidden rounded-full bg-school-navy/10 px-2.5 py-0.5 text-xs font-medium text-school-navy lg:inline">
-                {ROLE_LABELS[user.role]}
-              </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleLogout}
                 disabled={loading}
-                className={cn("shrink-0")}
+                className={cn("h-8 shrink-0 px-2.5 text-xs sm:px-3")}
               >
                 <LogOut className="size-4 sm:hidden" />
                 <span className="hidden sm:inline">

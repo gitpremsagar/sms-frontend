@@ -1,4 +1,4 @@
-import { PortalShell } from "@/components/portal/portal-shell";
+import { TeacherPortalShell } from "@/components/portal/teacher-portal-shell";
 import { requireRole } from "@/lib/require-role";
 
 export default async function TeacherLayout({
@@ -8,5 +8,5 @@ export default async function TeacherLayout({
 }) {
   await requireRole("TEACHER");
 
-  return <PortalShell>{children}</PortalShell>;
+  return <TeacherPortalShell>{children}</TeacherPortalShell>;
 }

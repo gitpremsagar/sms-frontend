@@ -56,6 +56,11 @@ export default async function AdminPage() {
               <p className="text-xs text-muted-foreground">Students</p>
             </div>
           </div>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/notifications">Send Notification</Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
