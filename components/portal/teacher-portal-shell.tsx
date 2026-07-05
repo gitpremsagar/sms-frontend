@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import {
   BookOpen,
   CalendarCheck,
+  IndianRupee,
   LogOut,
   Menu,
   X,
@@ -32,6 +33,12 @@ const NAV_ITEMS = [
     label: "Attendance Register",
     icon: CalendarCheck,
     match: (path: string) => path.startsWith("/teacher/attendance"),
+  },
+  {
+    href: "/teacher/salary",
+    label: "Salary",
+    icon: IndianRupee,
+    match: (path: string) => path.startsWith("/teacher/salary"),
   },
   {
     href: "/teacher/notifications",

@@ -26,6 +26,9 @@ export default async function AdminTeachersPage() {
             <Button asChild variant="outline" size="sm">
               <Link href="/admin/teacher/attendance">Attendance Register</Link>
             </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/teacher/salary">Salary Register</Link>
+            </Button>
             <Button asChild size="sm">
               <Link href="/admin/teacher/add-teacher">Add Teacher</Link>
             </Button>
@@ -56,6 +59,16 @@ export default async function AdminTeachersPage() {
                 key: "phone",
                 label: "Phone",
                 render: (row) => row.phone ?? "—",
+              },
+              {
+                key: "monthlySalary",
+                label: "Monthly Salary",
+                render: (row) =>
+                  new Intl.NumberFormat("en-IN", {
+                    style: "currency",
+                    currency: "INR",
+                    maximumFractionDigits: 0,
+                  }).format(row.monthlySalary ?? 0),
               },
             ]}
             rows={teachers}

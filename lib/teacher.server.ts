@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { getApiBaseUrl } from "./api";
 import type { AttendanceRegister } from "./attendance";
+import type { SalaryBreakdown } from "./salary";
 import type {
   TeacherClassDetail,
   TeacherClassSummary,
@@ -111,4 +112,35 @@ export async function getTeacherNotifications(): Promise<TeacherNotification[]> 
 
   const data = (await response.json()) as { notifications: TeacherNotification[] };
   return data.notifications;
+}
+
+export async function getTeacherSalary(
+  year: number,
+  month: number,
+): Promise<SalaryBreakdown | null> {
+  const cookieHeader = await getCookieHeader();
+
+  if (!cookieHeader) {
+    return null;
+  }
+
+  const params = new URLSearchParams({
+    year: String(year),
+    month: String(month),
+  });
+
+  const response = await fetch(
+    `${getApiBaseUrl()}/api/teacher/salary?${params.toString()}`,
+    {
+      headers: { Cookie: cookieHeader },
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = (await response.json()) as { breakdown: SalaryBreakdown };
+  return data.breakdown;
 }

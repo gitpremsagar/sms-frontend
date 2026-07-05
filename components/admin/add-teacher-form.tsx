@@ -28,6 +28,7 @@ export function AddTeacherForm() {
   const [workStartTime, setWorkStartTime] = useState("09:00");
   const [workEndTime, setWorkEndTime] = useState("17:00");
   const [halfDayThresholdTime, setHalfDayThresholdTime] = useState("11:00");
+  const [monthlySalary, setMonthlySalary] = useState("0");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -46,6 +47,7 @@ export function AddTeacherForm() {
         workStartTime,
         workEndTime,
         halfDayThresholdTime,
+        monthlySalary: Number(monthlySalary) || 0,
       });
       router.push("/admin/teachers");
       router.refresh();
@@ -160,6 +162,19 @@ export function AddTeacherForm() {
                 type="time"
                 value={halfDayThresholdTime}
                 onChange={(event) => setHalfDayThresholdTime(event.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="monthlySalary">Monthly Salary</Label>
+              <Input
+                id="monthlySalary"
+                type="number"
+                min={0}
+                step="0.01"
+                value={monthlySalary}
+                onChange={(event) => setMonthlySalary(event.target.value)}
                 required
               />
             </div>
