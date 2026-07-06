@@ -7,6 +7,7 @@ import {
   Bell,
   BookOpen,
   GraduationCap,
+  IndianRupee,
   LogOut,
   Menu,
   Users,
@@ -48,6 +49,12 @@ const NAV_ITEMS = [
     icon: Users,
     match: (path: string) =>
       path.startsWith("/admin/students") || path.startsWith("/admin/student"),
+  },
+  {
+    href: "/admin/fees",
+    label: "Fees",
+    icon: IndianRupee,
+    match: (path: string) => path.startsWith("/admin/fees"),
   },
   {
     href: "/admin/notifications",

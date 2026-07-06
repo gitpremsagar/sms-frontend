@@ -30,6 +30,7 @@ export function AddClassForm({ teachers }: AddClassFormProps) {
   const router = useRouter();
   const [className, setClassName] = useState("");
   const [teacherId, setTeacherId] = useState(teachers[0]?.id ?? "");
+  const [monthlyFee, setMonthlyFee] = useState("0");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +40,11 @@ export function AddClassForm({ teachers }: AddClassFormProps) {
     setLoading(true);
 
     try {
-      await createClass({ className, teacherId });
+      await createClass({
+        className,
+        teacherId,
+        monthlyFee: Number(monthlyFee) || 0,
+      });
       router.push("/admin/classes");
       router.refresh();
     } catch (err) {
@@ -115,6 +120,19 @@ export function AddClassForm({ teachers }: AddClassFormProps) {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="monthlyFee">Monthly Fee (₹)</Label>
+              <Input
+                id="monthlyFee"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0"
+                value={monthlyFee}
+                onChange={(event) => setMonthlyFee(event.target.value)}
+              />
             </div>
           </div>
 

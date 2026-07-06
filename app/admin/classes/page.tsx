@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
 import { ResponsiveDataTable } from "@/components/ui/responsive-data-table";
 import { ClassRowActions } from "@/components/admin/class-row-actions";
+import { formatCurrency } from "@/lib/salary";
 import { requireRole } from "@/lib/require-role";
 import { getClasses } from "@/lib/classes.server";
 import type { SchoolClass } from "@/lib/classes";
@@ -42,6 +43,11 @@ export default async function AdminClassesPage() {
             columns={[
               { key: "className", label: "Class Name" },
               { key: "teacherName", label: "Assigned Teacher" },
+              {
+                key: "monthlyFee",
+                label: "Monthly Fee",
+                render: (row) => formatCurrency(row.monthlyFee),
+              },
             ]}
             rows={classes}
             rowKey={(row) => row.id}

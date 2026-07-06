@@ -31,6 +31,7 @@ export function EditClassForm({ schoolClass, teachers }: EditClassFormProps) {
   const router = useRouter();
   const [className, setClassName] = useState(schoolClass.className);
   const [teacherId, setTeacherId] = useState(schoolClass.teacherId);
+  const [monthlyFee, setMonthlyFee] = useState(String(schoolClass.monthlyFee));
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +41,11 @@ export function EditClassForm({ schoolClass, teachers }: EditClassFormProps) {
     setLoading(true);
 
     try {
-      await updateClass(schoolClass.id, { className, teacherId });
+      await updateClass(schoolClass.id, {
+        className,
+        teacherId,
+        monthlyFee: Number(monthlyFee) || 0,
+      });
       router.push("/admin/classes");
       router.refresh();
     } catch (err) {
@@ -77,7 +82,7 @@ export function EditClassForm({ schoolClass, teachers }: EditClassFormProps) {
       <CardHeader>
         <CardTitle>Edit Class</CardTitle>
         <CardDescription>
-          Update class name or reassign the teacher.
+          Update class name, assigned teacher, or monthly fee.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -116,6 +121,19 @@ export function EditClassForm({ schoolClass, teachers }: EditClassFormProps) {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="monthlyFee">Monthly Fee (₹)</Label>
+              <Input
+                id="monthlyFee"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0"
+                value={monthlyFee}
+                onChange={(event) => setMonthlyFee(event.target.value)}
+              />
             </div>
           </div>
 

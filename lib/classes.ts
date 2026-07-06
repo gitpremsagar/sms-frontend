@@ -5,17 +5,20 @@ export type SchoolClass = {
   className: string;
   teacherId: string;
   teacherName: string;
+  monthlyFee: number;
   createdAt: string;
 };
 
 export type CreateClassInput = {
   className: string;
   teacherId: string;
+  monthlyFee?: number;
 };
 
 export type UpdateClassInput = {
   className?: string;
   teacherId?: string;
+  monthlyFee?: number;
 };
 
 export async function createClass(

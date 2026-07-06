@@ -41,6 +41,12 @@ const NAV_ITEMS = [
     match: (path: string) => path.startsWith("/teacher/salary"),
   },
   {
+    href: "/teacher/fees",
+    label: "Fees",
+    icon: IndianRupee,
+    match: (path: string) => path.startsWith("/teacher/fees"),
+  },
+  {
     href: "/teacher/notifications",
     label: "Notifications",
     icon: Bell,
@@ -119,7 +125,9 @@ export function TeacherPortalShell({ children }: TeacherPortalShellProps) {
   const [loading, setLoading] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const isFullWidthPage = pathname.startsWith("/teacher/attendance");
+  const isFullWidthPage =
+    pathname.startsWith("/teacher/attendance") ||
+    pathname.startsWith("/teacher/fees");
 
   useEffect(() => {
     if (!user) {
