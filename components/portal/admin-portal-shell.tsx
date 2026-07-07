@@ -137,12 +137,13 @@ export function AdminPortalShell({ children }: AdminPortalShellProps) {
 
   const isFullWidthPage =
     pathname === "/admin/students" ||
-    pathname.startsWith("/admin/student/attendance");
+    pathname.startsWith("/admin/student/attendance") ||
+    pathname.startsWith("/admin/fees");
 
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-40 border-b bg-background/95 pt-[env(safe-area-inset-top)] shadow-sm backdrop-blur supports-backdrop-filter:bg-background/80">
-        <PageContainer className="py-0! px-4 sm:px-6">
+        <PageContainer className="py-0! px-4 sm:px-6" fullWidth={isFullWidthPage}>
           <div className="flex h-11 items-center justify-between gap-3 sm:h-12">
             <div className="flex min-w-0 items-center gap-2">
               <Button
@@ -204,7 +205,7 @@ export function AdminPortalShell({ children }: AdminPortalShellProps) {
 
       {mobileNavOpen ? (
         <div className="border-b bg-background md:hidden">
-          <PageContainer className="py-2">
+          <PageContainer className="py-2" fullWidth={isFullWidthPage}>
             <NavLinks
               pathname={pathname}
               onNavigate={() => setMobileNavOpen(false)}

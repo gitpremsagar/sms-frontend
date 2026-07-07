@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
 import {
   formatCurrency,
@@ -118,6 +119,7 @@ export function StudentFeeRegister({
     register.financialYearStart,
   );
   const [classId, setClassId] = useState("");
+  const [nameSearch, setNameSearch] = useState("");
   const [selectedCell, setSelectedCell] = useState<SelectedCell | null>(null);
   const [amountInput, setAmountInput] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -216,6 +218,17 @@ export function StudentFeeRegister({
       ? Math.max(0, monthlyFee - parsedAmount)
       : monthlyFee;
 
+  const filteredStudents = useMemo(() => {
+    const normalizedSearch = nameSearch.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return register.students;
+    }
+
+    return register.students.filter((student) =>
+      student.name.toLowerCase().includes(normalizedSearch),
+    );
+  }, [register.students, nameSearch]);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -302,12 +315,31 @@ export function StudentFeeRegister({
             </p>
           ) : (
             <>
+              <div className="max-w-sm space-y-2">
+                <Label htmlFor="fee-student-search">Search by Name</Label>
+                <Input
+                  id="fee-student-search"
+                  type="search"
+                  placeholder="Search students..."
+                  value={nameSearch}
+                  onChange={(event) => setNameSearch(event.target.value)}
+                />
+              </div>
+
+              {filteredStudents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No students match your search.
+                </p>
+              ) : null}
+
+              {filteredStudents.length > 0 ? (
+                <>
               <div className="hidden overflow-x-auto rounded-lg border md:block">
                 <table className="w-max min-w-full border-collapse text-sm">
                   <thead>
                     <tr className="border-b bg-muted/40">
-                      <th className="sticky left-0 z-20 min-w-24 border-r bg-muted/40 px-3 py-2 text-left font-medium">
-                        Roll No
+                      <th className="sticky left-0 z-20 min-w-16 border-r bg-muted/40 px-3 py-2 text-left font-medium">
+                        S.No.
                       </th>
                       <th className="sticky left-24 z-20 min-w-36 border-r bg-muted/40 px-3 py-2 text-left font-medium">
                         Name
@@ -330,10 +362,10 @@ export function StudentFeeRegister({
                     </tr>
                   </thead>
                   <tbody>
-                    {register.students.map((student) => (
+                    {filteredStudents.map((student, index) => (
                       <tr key={student.id} className="hover:bg-muted/20">
                         <td className="sticky left-0 z-10 border-r bg-background px-3 py-2">
-                          {student.rollNumber}
+                          {index + 1}
                         </td>
                         <td className="sticky left-24 z-10 border-r bg-background px-3 py-2">
                           {student.name}
@@ -374,13 +406,14 @@ export function StudentFeeRegister({
               </div>
 
               <div className="space-y-3 md:hidden">
-                {register.students.map((student) => (
+                {filteredStudents.map((student, index) => (
                   <div key={student.id} className="rounded-lg border p-3">
                     <div className="mb-2 space-y-1">
-                      <p className="font-medium">{student.name}</p>
+                      <p className="font-medium">
+                        {index + 1}. {student.name}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {student.rollNumber} · {student.className} ·{" "}
-                        {formatCurrency(student.monthlyFee)}/mo
+                        {student.className} · {formatCurrency(student.monthlyFee)}/mo
                       </p>
                     </div>
                     <div className="grid grid-cols-4 gap-1">
@@ -413,6 +446,8 @@ export function StudentFeeRegister({
                   </div>
                 ))}
               </div>
+                </>
+              ) : null}
             </>
           )}
         </CardContent>
