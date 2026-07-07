@@ -135,7 +135,9 @@ export function AdminPortalShell({ children }: AdminPortalShellProps) {
     );
   }
 
-  const isFullWidthPage = pathname === "/admin/students";
+  const isFullWidthPage =
+    pathname === "/admin/students" ||
+    pathname.startsWith("/admin/student/attendance");
 
   return (
     <div className="min-h-screen bg-muted/20">

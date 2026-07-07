@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { BackLink } from "@/components/ui/back-link";
+import { Button } from "@/components/ui/button";
 import { ResponsiveDataTable } from "@/components/ui/responsive-data-table";
 import { getTeacherClassById } from "@/lib/teacher.server";
 import { requireRole } from "@/lib/require-role";
@@ -29,12 +30,26 @@ export default async function TeacherClassDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>{schoolClass.className}</CardTitle>
-          <CardDescription>
-            {schoolClass.students.length === 0
-              ? "No students in this class yet."
-              : `${schoolClass.students.length} student${schoolClass.students.length === 1 ? "" : "s"} enrolled.`}
-          </CardDescription>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <CardTitle>{schoolClass.className}</CardTitle>
+              <CardDescription>
+                {schoolClass.students.length === 0
+                  ? "No students in this class yet."
+                  : `${schoolClass.students.length} student${schoolClass.students.length === 1 ? "" : "s"} enrolled.`}
+              </CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="sm">
+                <Link href={`/teacher/class/${id}/attendance/take`}>Take Attendance</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/teacher/class/${id}/attendance/register`}>
+                  Attendance Register
+                </Link>
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <ResponsiveDataTable<TeacherClassStudent>

@@ -30,9 +30,10 @@ type TeacherPortalShellProps = {
 const NAV_ITEMS = [
   {
     href: "/teacher/attendance",
-    label: "Attendance Register",
+    label: "My Attendance",
     icon: CalendarCheck,
-    match: (path: string) => path.startsWith("/teacher/attendance"),
+    match: (path: string) =>
+      path === "/teacher/attendance" || path.startsWith("/teacher/attendance?"),
   },
   {
     href: "/teacher/salary",
@@ -127,7 +128,8 @@ export function TeacherPortalShell({ children }: TeacherPortalShellProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const isFullWidthPage =
     pathname.startsWith("/teacher/attendance") ||
-    pathname.startsWith("/teacher/fees");
+    pathname.startsWith("/teacher/fees") ||
+    pathname.includes("/attendance/");
 
   useEffect(() => {
     if (!user) {

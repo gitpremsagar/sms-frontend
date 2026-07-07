@@ -38,9 +38,16 @@ export default async function TeacherClassPage() {
             rows={classes}
             rowKey={(row) => row.id}
             actions={(row) => (
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/teacher/class/${row.id}`}>View roster</Link>
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/teacher/class/${row.id}`}>View roster</Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/teacher/class/${row.id}/attendance/take`}>
+                    Take attendance
+                  </Link>
+                </Button>
+              </div>
             )}
             emptyMessage="No classes assigned to you yet."
           />

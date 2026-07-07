@@ -4,6 +4,10 @@ import { getApiBaseUrl } from "./api";
 import type { AttendanceRegister } from "./attendance";
 import type { SalaryBreakdown } from "./salary";
 import type {
+  StudentAttendanceDaily,
+  StudentAttendanceRegister,
+} from "./student-attendance";
+import type {
   TeacherClassDetail,
   TeacherClassSummary,
   TeacherNotification,
@@ -92,6 +96,68 @@ export async function getTeacherClassById(
 
   const data = (await response.json()) as { class: TeacherClassDetail };
   return data.class;
+}
+
+export async function getTeacherClassAttendanceRegister(
+  classId: string,
+  year: number,
+  month: number,
+): Promise<StudentAttendanceRegister | null> {
+  const cookieHeader = await getCookieHeader();
+
+  if (!cookieHeader) {
+    return null;
+  }
+
+  const params = new URLSearchParams({
+    year: String(year),
+    month: String(month),
+  });
+
+  const response = await fetch(
+    `${getApiBaseUrl()}/api/teacher/classes/${classId}/student-attendance/register?${params.toString()}`,
+    {
+      headers: { Cookie: cookieHeader },
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = (await response.json()) as {
+    register: StudentAttendanceRegister;
+  };
+  return data.register;
+}
+
+export async function getTeacherClassAttendanceDaily(
+  classId: string,
+  date: string,
+): Promise<StudentAttendanceDaily | null> {
+  const cookieHeader = await getCookieHeader();
+
+  if (!cookieHeader) {
+    return null;
+  }
+
+  const params = new URLSearchParams({ date });
+
+  const response = await fetch(
+    `${getApiBaseUrl()}/api/teacher/classes/${classId}/student-attendance/daily?${params.toString()}`,
+    {
+      headers: { Cookie: cookieHeader },
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = (await response.json()) as { roster: StudentAttendanceDaily };
+  return data.roster;
 }
 
 export async function getTeacherNotifications(): Promise<TeacherNotification[]> {

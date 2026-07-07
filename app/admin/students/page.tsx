@@ -23,6 +23,12 @@ export default async function AdminStudentsPage() {
         actions={
           <div className="flex flex-wrap gap-2">
             <Button asChild size="sm" variant="outline">
+              <Link href="/admin/student/attendance/take">Take Attendance</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/admin/student/attendance/register">Attendance Register</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
               <Link href="/admin/students/import">Import CSV</Link>
             </Button>
             <Button asChild size="sm">
