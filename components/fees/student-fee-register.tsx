@@ -23,12 +23,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SortableTableHead } from "@/components/ui/sortable-table-head";
+import {
+  feeCellColorClass,
+  feeStatusLabel,
+  feeStatusSymbolFromCell,
+  FeePaymentLegend,
+} from "@/components/fees/fee-payment-ui";
+import { StudentFeeRegisterMobile } from "@/components/fees/student-fee-register-mobile";
 import { ApiError } from "@/lib/api";
 import {
   formatCurrency,
   updateFeePayment,
   type FeePaymentCell,
-  type FeePaymentCellStatus,
   type FeeRegister,
   type FeeRegisterStudent,
 } from "@/lib/fees";
@@ -44,7 +50,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const selectClassName =
-  "h-8 rounded-md border border-input bg-background px-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30";
+  "h-10 w-full rounded-md border border-input bg-background px-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 sm:h-8 sm:w-auto";
 
 const excelCellBorder = "border border-[#d4d4d4]";
 const excelHeaderClass = "border border-[#d4d4d4] bg-[#f0f0f0] text-[#212121]";
@@ -64,42 +70,13 @@ type SelectedCell = {
   cell: FeePaymentCell;
 };
 
-function cellSymbol(cell: FeePaymentCell): string {
-  if (cell.status === "PAID") {
-    return "P";
-  }
-  if (cell.status === "PARTIAL") {
-    return "P";
-  }
-  if (cell.status === "UNPAID") {
-    return "U";
-  }
-  return "-";
-}
-
 function cellClassName(cell: FeePaymentCell): string {
   return cn(
     "min-w-[52px] cursor-pointer px-1 py-1 text-center text-xs font-normal transition-colors",
     excelCellBorder,
     "group-hover:bg-[#d8e9f8]",
-    cell.status === "PAID" && "bg-[#e2efda] text-[#375623]",
-    cell.status === "PARTIAL" && "bg-[#fff2cc] text-[#7f6000]",
-    cell.status === "UNPAID" && "bg-[#fce4d6] text-[#c65911]",
-    cell.status === "UPCOMING" && "cursor-default bg-white text-[#808080]",
+    feeCellColorClass(cell.status, { variant: "excel" }),
   );
-}
-
-function statusLabel(status: FeePaymentCellStatus): string {
-  if (status === "PAID") {
-    return "Paid";
-  }
-  if (status === "PARTIAL") {
-    return "Partial";
-  }
-  if (status === "UNPAID") {
-    return "Unpaid";
-  }
-  return "Upcoming";
 }
 
 function getDefaultAmount(
@@ -315,7 +292,7 @@ export function StudentFeeRegister({
               </CardDescription>
             </div>
             {showReportLink ? (
-              <Button variant="outline" size="sm" asChild>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto" asChild>
                 <Link href={`/admin/fees/report?financialYearStart=${register.financialYearStart}`}>
                   View detailed report →
                 </Link>
@@ -324,7 +301,7 @@ export function StudentFeeRegister({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end">
             <div className="space-y-1">
               <label htmlFor="fy" className="text-xs text-muted-foreground">
                 Financial Year
@@ -360,25 +337,18 @@ export function StudentFeeRegister({
                 ))}
               </select>
             </div>
-            <Button onClick={applyFilters}>Apply</Button>
-            <Button variant="outline" onClick={resetFilters}>
-              Reset
-            </Button>
+            <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row lg:col-span-1">
+              <Button onClick={applyFilters} className="w-full sm:w-auto">
+                Apply
+              </Button>
+              <Button variant="outline" onClick={resetFilters} className="w-full sm:w-auto">
+                Reset
+              </Button>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-            <span>
-              <span className="font-semibold text-[#375623]">P</span> = Paid
-            </span>
-            <span>
-              <span className="font-semibold text-[#7f6000]">P</span> = Partial
-            </span>
-            <span>
-              <span className="font-semibold text-[#c65911]">U</span> = Unpaid
-            </span>
-            <span>
-              <span className="font-semibold">-</span> = Upcoming
-            </span>
+          <div className="hidden md:block">
+            <FeePaymentLegend />
           </div>
 
           {register.students.length === 0 ? (
@@ -387,7 +357,7 @@ export function StudentFeeRegister({
             </p>
           ) : (
             <>
-              <div className="max-w-sm space-y-2">
+              <div className="w-full space-y-2 sm:max-w-sm">
                 <Label htmlFor="fee-student-search">Search by Name</Label>
                 <Input
                   id="fee-student-search"
@@ -505,7 +475,7 @@ export function StudentFeeRegister({
                               title={`${student.name} — ${label}`}
                             >
                               <div className="flex flex-col items-center gap-0.5">
-                                <span>{cellSymbol(cell)}</span>
+                                <span>{feeStatusSymbolFromCell(cell)}</span>
                                 {cell.status === "PARTIAL" ? (
                                   <span className="text-[9px] font-normal">
                                     {formatCurrency(cell.amount)}
@@ -521,47 +491,11 @@ export function StudentFeeRegister({
                 </table>
               </div>
 
-              <div className="space-y-3 md:hidden">
-                {sortedStudents.map((student, index) => (
-                  <div key={student.id} className="rounded-lg border p-3">
-                    <div className="mb-2 space-y-1">
-                      <p className="font-medium">
-                        {index + 1}. {student.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {student.className}
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-4 gap-1">
-                      {register.months.map(({ month, label }) => {
-                        const cell = student.payments[month] ?? {
-                          status: "UPCOMING" as const,
-                          amount: 0,
-                        };
-                        return (
-                          <button
-                            key={month}
-                            type="button"
-                            disabled={cell.status === "UPCOMING"}
-                            className={cn(cellClassName(cell), "rounded border")}
-                            onClick={() => openCell(student, month, label)}
-                          >
-                            <span className="block text-[10px] text-muted-foreground">
-                              {label}
-                            </span>
-                            <span>{cellSymbol(cell)}</span>
-                            {cell.status === "PARTIAL" ? (
-                              <span className="block text-[9px] font-normal">
-                                {formatCurrency(cell.amount)}
-                              </span>
-                            ) : null}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <StudentFeeRegisterMobile
+                register={register}
+                students={sortedStudents}
+                onCellClick={openCell}
+              />
                 </>
               ) : null}
             </>
@@ -594,7 +528,7 @@ export function StudentFeeRegister({
               </span>
               . Current status:{" "}
               <span className="font-medium text-foreground">
-                {selectedCell ? statusLabel(selectedCell.cell.status) : "—"}
+                {selectedCell ? feeStatusLabel(selectedCell.cell.status) : "—"}
               </span>
               {selectedCell && selectedCell.cell.amount > 0 ? (
                 <>
@@ -623,7 +557,7 @@ export function StudentFeeRegister({
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-0">
             <Button
               variant="outline"
               onClick={() => setDialogOpen(false)}
