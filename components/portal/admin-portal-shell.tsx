@@ -135,6 +135,8 @@ export function AdminPortalShell({ children }: AdminPortalShellProps) {
     );
   }
 
+  const isFullWidthPage = pathname === "/admin/students";
+
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-40 border-b bg-background/95 pt-[env(safe-area-inset-top)] shadow-sm backdrop-blur supports-backdrop-filter:bg-background/80">
@@ -209,7 +211,7 @@ export function AdminPortalShell({ children }: AdminPortalShellProps) {
         </div>
       ) : null}
 
-      <PageContainer className="py-6">
+      <PageContainer className="py-6" fullWidth={isFullWidthPage}>
         <div className="flex gap-6">
           <aside className="hidden w-56 shrink-0 md:block">
             <div className="sticky top-14 rounded-xl border bg-background p-3 shadow-sm">

@@ -15,6 +15,11 @@ import {
 import { FormActions } from "@/components/ui/form-actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  StudentProfileFields,
+  studentToProfileValues,
+  toStudentProfilePayload,
+} from "@/components/admin/student-profile-fields";
 import { ApiError } from "@/lib/api";
 import type { SchoolClass } from "@/lib/classes";
 import { type Student, updateStudent } from "@/lib/students";
@@ -36,8 +41,16 @@ export function EditStudentForm({ student, classes }: EditStudentFormProps) {
     student.studentRollNumber,
   );
   const [classId, setClassId] = useState(student.classId);
+  const [profile, setProfile] = useState(studentToProfileValues(student));
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function updateProfile<K extends keyof typeof profile>(
+    field: K,
+    value: (typeof profile)[K],
+  ) {
+    setProfile((current) => ({ ...current, [field]: value }));
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,6 +64,7 @@ export function EditStudentForm({ student, classes }: EditStudentFormProps) {
         password: password || undefined,
         studentRollNumber,
         classId,
+        ...toStudentProfilePayload(profile),
       });
       router.push("/admin/students");
       router.refresh();
@@ -93,7 +107,7 @@ export function EditStudentForm({ student, classes }: EditStudentFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {error ? (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -161,6 +175,11 @@ export function EditStudentForm({ student, classes }: EditStudentFormProps) {
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium">Student Profile</h3>
+            <StudentProfileFields values={profile} onChange={updateProfile} />
           </div>
 
           <FormActions>
