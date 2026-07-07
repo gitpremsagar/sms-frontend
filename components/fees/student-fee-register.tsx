@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,10 +20,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { ApiError } from "@/lib/api";
 import {
   formatCurrency,
   updateFeePayment,
+  type FeePaymentCell,
   type FeePaymentCellStatus,
   type FeeRegister,
   type FeeRegisterStudent,
@@ -47,26 +49,57 @@ type SelectedCell = {
   student: FeeRegisterStudent;
   month: number;
   monthLabel: string;
-  status: FeePaymentCellStatus;
+  cell: FeePaymentCell;
 };
 
-function cellSymbol(status: FeePaymentCellStatus): string {
-  if (status === "PAID") {
+function cellSymbol(cell: FeePaymentCell): string {
+  if (cell.status === "PAID") {
     return "P";
   }
-  if (status === "UNPAID") {
+  if (cell.status === "PARTIAL") {
+    return "P";
+  }
+  if (cell.status === "UNPAID") {
     return "U";
   }
   return "-";
 }
 
-function cellClassName(status: FeePaymentCellStatus): string {
+function cellClassName(cell: FeePaymentCell): string {
   return cn(
     "min-w-10 cursor-pointer border-b border-r px-1 py-2 text-center text-xs font-semibold transition-colors hover:bg-muted/50",
-    status === "PAID" && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
-    status === "UNPAID" && "bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400",
-    status === "UPCOMING" && "cursor-default text-muted-foreground",
+    cell.status === "PAID" &&
+      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
+    cell.status === "PARTIAL" &&
+      "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
+    cell.status === "UNPAID" &&
+      "bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400",
+    cell.status === "UPCOMING" && "cursor-default text-muted-foreground",
   );
+}
+
+function statusLabel(status: FeePaymentCellStatus): string {
+  if (status === "PAID") {
+    return "Paid";
+  }
+  if (status === "PARTIAL") {
+    return "Partial";
+  }
+  if (status === "UNPAID") {
+    return "Unpaid";
+  }
+  return "Upcoming";
+}
+
+function getDefaultAmount(
+  student: FeeRegisterStudent,
+  month: number,
+): number {
+  const cell = student.payments[month];
+  if (cell && cell.status !== "UPCOMING" && cell.amount > 0) {
+    return cell.amount;
+  }
+  return student.monthlyFee;
 }
 
 export function StudentFeeRegister({
@@ -86,9 +119,18 @@ export function StudentFeeRegister({
   );
   const [classId, setClassId] = useState("");
   const [selectedCell, setSelectedCell] = useState<SelectedCell | null>(null);
+  const [amountInput, setAmountInput] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedCell) {
+      return;
+    }
+
+    setAmountInput(String(getDefaultAmount(selectedCell.student, selectedCell.month)));
+  }, [selectedCell]);
 
   function applyFilters() {
     const params = new URLSearchParams({
@@ -107,18 +149,30 @@ export function StudentFeeRegister({
   }
 
   function openCell(student: FeeRegisterStudent, month: number, monthLabel: string) {
-    const status = student.payments[month];
-    if (!status || status === "UPCOMING") {
+    const cell = student.payments[month];
+    if (!cell || cell.status === "UPCOMING") {
       return;
     }
 
-    setSelectedCell({ student, month, monthLabel, status });
+    setSelectedCell({ student, month, monthLabel, cell });
     setError(null);
     setDialogOpen(true);
   }
 
-  async function confirmStatusChange(status: "PAID" | "UNPAID") {
+  async function saveAmount(amount: number) {
     if (!selectedCell) {
+      return;
+    }
+
+    if (amount > selectedCell.student.monthlyFee) {
+      setError(
+        `Amount cannot exceed the monthly fee of ${formatCurrency(selectedCell.student.monthlyFee)}`,
+      );
+      return;
+    }
+
+    if (amount < 0) {
+      setError("Amount cannot be negative");
       return;
     }
 
@@ -130,7 +184,7 @@ export function StudentFeeRegister({
         studentId: selectedCell.student.id,
         financialYearStart: register.financialYearStart,
         month: selectedCell.month,
-        status,
+        amount,
       });
       setDialogOpen(false);
       setSelectedCell(null);
@@ -142,6 +196,26 @@ export function StudentFeeRegister({
     }
   }
 
+  function handleSave() {
+    const amount = Number(amountInput);
+    if (Number.isNaN(amount)) {
+      setError("Enter a valid amount");
+      return;
+    }
+    void saveAmount(amount);
+  }
+
+  function handleMarkUnpaid() {
+    void saveAmount(0);
+  }
+
+  const parsedAmount = Number(amountInput);
+  const monthlyFee = selectedCell?.student.monthlyFee ?? 0;
+  const dueAmount =
+    selectedCell && !Number.isNaN(parsedAmount)
+      ? Math.max(0, monthlyFee - parsedAmount)
+      : monthlyFee;
+
   return (
     <div className="space-y-6">
       <Card>
@@ -150,9 +224,9 @@ export function StudentFeeRegister({
             <div>
               <CardTitle>Fee Register — FY {register.financialYearLabel}</CardTitle>
               <CardDescription>
-                Click a month cell to mark fee as paid or unpaid. Marking a month
-                paid automatically marks all earlier months in this financial year
-                as paid.
+                Click a month cell to record the amount paid. Full payment marks
+                all earlier months as paid. Partial payment applies only to the
+                selected month.
               </CardDescription>
             </div>
             {showReportLink ? (
@@ -212,7 +286,10 @@ export function StudentFeeRegister({
               <span className="font-semibold text-emerald-700">P</span> = Paid
             </span>
             <span>
-              <span className="font-semibold text-orange-700">U</span> = Unpaid (due)
+              <span className="font-semibold text-amber-700">P</span> = Partial
+            </span>
+            <span>
+              <span className="font-semibold text-orange-700">U</span> = Unpaid
             </span>
             <span>
               <span className="font-semibold">-</span> = Upcoming
@@ -268,15 +345,25 @@ export function StudentFeeRegister({
                           {formatCurrency(student.monthlyFee)}
                         </td>
                         {register.months.map(({ month, label }) => {
-                          const status = student.payments[month] ?? "UPCOMING";
+                          const cell = student.payments[month] ?? {
+                            status: "UPCOMING" as const,
+                            amount: 0,
+                          };
                           return (
                             <td
                               key={month}
-                              className={cellClassName(status)}
+                              className={cellClassName(cell)}
                               onClick={() => openCell(student, month, label)}
                               title={`${student.name} — ${label}`}
                             >
-                              {cellSymbol(status)}
+                              <div className="flex flex-col items-center gap-0.5">
+                                <span>{cellSymbol(cell)}</span>
+                                {cell.status === "PARTIAL" ? (
+                                  <span className="text-[9px] font-normal">
+                                    {formatCurrency(cell.amount)}
+                                  </span>
+                                ) : null}
+                              </div>
                             </td>
                           );
                         })}
@@ -298,19 +385,27 @@ export function StudentFeeRegister({
                     </div>
                     <div className="grid grid-cols-4 gap-1">
                       {register.months.map(({ month, label }) => {
-                        const status = student.payments[month] ?? "UPCOMING";
+                        const cell = student.payments[month] ?? {
+                          status: "UPCOMING" as const,
+                          amount: 0,
+                        };
                         return (
                           <button
                             key={month}
                             type="button"
-                            disabled={status === "UPCOMING"}
-                            className={cn(cellClassName(status), "rounded border")}
+                            disabled={cell.status === "UPCOMING"}
+                            className={cn(cellClassName(cell), "rounded border")}
                             onClick={() => openCell(student, month, label)}
                           >
                             <span className="block text-[10px] text-muted-foreground">
                               {label}
                             </span>
-                            {cellSymbol(status)}
+                            <span>{cellSymbol(cell)}</span>
+                            {cell.status === "PARTIAL" ? (
+                              <span className="block text-[9px] font-normal">
+                                {formatCurrency(cell.amount)}
+                              </span>
+                            ) : null}
                           </button>
                         );
                       })}
@@ -340,16 +435,42 @@ export function StudentFeeRegister({
             </Alert>
           ) : null}
 
-          <p className="text-sm text-muted-foreground">
-            Monthly fee:{" "}
-            {selectedCell
-              ? formatCurrency(selectedCell.student.monthlyFee)
-              : "—"}
-            . Current status:{" "}
-            <span className="font-medium">
-              {selectedCell?.status === "PAID" ? "Paid" : "Unpaid"}
-            </span>
-          </p>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Monthly fee:{" "}
+              <span className="font-medium text-foreground">
+                {selectedCell ? formatCurrency(selectedCell.student.monthlyFee) : "—"}
+              </span>
+              . Current status:{" "}
+              <span className="font-medium text-foreground">
+                {selectedCell ? statusLabel(selectedCell.cell.status) : "—"}
+              </span>
+              {selectedCell && selectedCell.cell.amount > 0 ? (
+                <>
+                  {" "}
+                  · Paid: {formatCurrency(selectedCell.cell.amount)}
+                </>
+              ) : null}
+            </p>
+
+            <div className="space-y-1">
+              <label htmlFor="amountPaid" className="text-xs text-muted-foreground">
+                Amount paid
+              </label>
+              <Input
+                id="amountPaid"
+                type="number"
+                min={0}
+                max={monthlyFee}
+                step={1}
+                value={amountInput}
+                onChange={(event) => setAmountInput(event.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Due after payment: {formatCurrency(dueAmount)}
+              </p>
+            </div>
+          </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
@@ -359,23 +480,16 @@ export function StudentFeeRegister({
             >
               Cancel
             </Button>
-            {selectedCell?.status !== "UNPAID" ? (
-              <Button
-                variant="outline"
-                onClick={() => confirmStatusChange("UNPAID")}
-                disabled={loading}
-              >
-                Mark Unpaid
-              </Button>
-            ) : null}
-            {selectedCell?.status !== "PAID" ? (
-              <Button
-                onClick={() => confirmStatusChange("PAID")}
-                disabled={loading}
-              >
-                {loading ? "Saving..." : "Mark Paid"}
-              </Button>
-            ) : null}
+            <Button
+              variant="outline"
+              onClick={handleMarkUnpaid}
+              disabled={loading}
+            >
+              Mark Unpaid
+            </Button>
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? "Saving..." : "Save"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,6 +1,11 @@
 import { apiFetch } from "./api";
 
-export type FeePaymentCellStatus = "PAID" | "UNPAID" | "UPCOMING";
+export type FeePaymentCellStatus = "PAID" | "PARTIAL" | "UNPAID" | "UPCOMING";
+
+export type FeePaymentCell = {
+  status: FeePaymentCellStatus;
+  amount: number;
+};
 
 export type FeeRegisterStudent = {
   id: string;
@@ -9,7 +14,7 @@ export type FeeRegisterStudent = {
   classId: string;
   className: string;
   monthlyFee: number;
-  payments: Record<number, FeePaymentCellStatus>;
+  payments: Record<number, FeePaymentCell>;
 };
 
 export type FeeRegister = {
@@ -33,10 +38,7 @@ export type FeeReportStudentRow = {
   name: string;
   rollNumber: string;
   monthlyFee: number;
-  payments: Record<
-    number,
-    { status: FeePaymentCellStatus; amount: number }
-  >;
+  payments: Record<number, FeePaymentCell>;
 };
 
 export type FeeReportClassBreakdown = {
@@ -68,7 +70,7 @@ export type UpdateFeePaymentInput = {
   studentId: string;
   financialYearStart: number;
   month: number;
-  status: "PAID" | "UNPAID";
+  amount: number;
 };
 
 export async function updateFeePayment(

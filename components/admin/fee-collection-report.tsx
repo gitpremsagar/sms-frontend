@@ -39,6 +39,13 @@ function statusBadge(status: FeePaymentCellStatus) {
       </span>
     );
   }
+  if (status === "PARTIAL") {
+    return (
+      <span className="rounded bg-amber-100 px-1 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+        P
+      </span>
+    );
+  }
   if (status === "UNPAID") {
     return (
       <span className="rounded bg-orange-100 px-1 text-[10px] font-semibold text-orange-700 dark:bg-orange-950/40 dark:text-orange-400">
@@ -204,6 +211,12 @@ export function FeeCollectionReport({ report }: FeeCollectionReportProps) {
                         </td>
                         {report.months.map(({ month }) => {
                           const cell = student.payments[month];
+                          const paid = cell?.amount ?? 0;
+                          const due =
+                            cell?.status !== "UPCOMING"
+                              ? student.monthlyFee - paid
+                              : 0;
+
                           return (
                             <td
                               key={month}
@@ -211,6 +224,8 @@ export function FeeCollectionReport({ report }: FeeCollectionReportProps) {
                                 "border-r px-1 py-2 text-center text-xs",
                                 cell?.status === "PAID" &&
                                   "bg-emerald-50/50 dark:bg-emerald-950/20",
+                                cell?.status === "PARTIAL" &&
+                                  "bg-amber-50/50 dark:bg-amber-950/20",
                                 cell?.status === "UNPAID" &&
                                   "bg-orange-50/50 dark:bg-orange-950/20",
                               )}
@@ -218,9 +233,16 @@ export function FeeCollectionReport({ report }: FeeCollectionReportProps) {
                               <div className="flex flex-col items-center gap-0.5">
                                 {statusBadge(cell?.status ?? "UPCOMING")}
                                 {cell?.status !== "UPCOMING" ? (
-                                  <span className="text-[10px] text-muted-foreground">
-                                    {formatCurrency(cell?.amount ?? 0)}
-                                  </span>
+                                  <>
+                                    <span className="text-[10px] text-emerald-700 dark:text-emerald-400">
+                                      {formatCurrency(paid)}
+                                    </span>
+                                    {due > 0 ? (
+                                      <span className="text-[10px] text-orange-700 dark:text-orange-400">
+                                        Due {formatCurrency(due)}
+                                      </span>
+                                    ) : null}
+                                  </>
                                 ) : null}
                               </div>
                             </td>
