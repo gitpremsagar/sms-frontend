@@ -13,10 +13,6 @@ import type { Student } from "@/lib/students";
 const selectClassName =
   "flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 sm:max-w-xs";
 
-type StudentListRow = Student & {
-  serialNumber: number;
-};
-
 type StudentsListProps = {
   students: Student[];
   classes: SchoolClass[];
@@ -38,15 +34,6 @@ export function StudentsList({ students, classes }: StudentsListProps) {
       return matchesClass && matchesSearch;
     });
   }, [students, search, classId]);
-
-  const rows: StudentListRow[] = useMemo(
-    () =>
-      filteredStudents.map((student, index) => ({
-        ...student,
-        serialNumber: index + 1,
-      })),
-    [filteredStudents],
-  );
 
   const hasFilters = search.trim().length > 0 || classId.length > 0;
 
@@ -97,12 +84,13 @@ export function StudentsList({ students, classes }: StudentsListProps) {
 
       {hasFilters ? (
         <p className="text-sm text-muted-foreground">
-          Showing {rows.length} of {students.length} student
+          Showing {filteredStudents.length} of {students.length} student
           {students.length === 1 ? "" : "s"}.
         </p>
       ) : null}
 
-      <ResponsiveDataTable<StudentListRow>
+      <ResponsiveDataTable<Student>
+        sortable
         columns={[
           { key: "serialNumber", label: "S.No." },
           { key: "name", label: "Name" },
@@ -110,7 +98,7 @@ export function StudentsList({ students, classes }: StudentsListProps) {
           { key: "studentRollNumber", label: "Roll Number" },
           { key: "className", label: "Class" },
         ]}
-        rows={rows}
+        rows={filteredStudents}
         rowKey={(row) => row.id}
         emptyMessage="No students match your search or filter."
         actions={(row) => <StudentRowActions id={row.id} name={row.name} />}

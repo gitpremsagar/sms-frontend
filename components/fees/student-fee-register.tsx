@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
 import { ApiError } from "@/lib/api";
 import {
   formatCurrency,
@@ -35,10 +36,20 @@ import {
   getFinancialYearStart,
   listFinancialYearOptions,
 } from "@/lib/financial-year";
+import {
+  nextSortDirection,
+  sortRows,
+  type SortDirection,
+} from "@/lib/table-sort";
 import { cn } from "@/lib/utils";
 
 const selectClassName =
   "h-8 rounded-md border border-input bg-background px-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30";
+
+const excelCellBorder = "border border-[#d4d4d4]";
+const excelHeaderClass = "border border-[#d4d4d4] bg-[#f0f0f0] text-[#212121]";
+const excelBodyCellClass =
+  "border border-[#d4d4d4] bg-white px-2 py-1 text-[13px] text-[#212121] group-hover:bg-[#d8e9f8]";
 
 type StudentFeeRegisterProps = {
   register: FeeRegister;
@@ -68,14 +79,13 @@ function cellSymbol(cell: FeePaymentCell): string {
 
 function cellClassName(cell: FeePaymentCell): string {
   return cn(
-    "min-w-10 cursor-pointer border-b border-r px-1 py-2 text-center text-xs font-semibold transition-colors hover:bg-muted/50",
-    cell.status === "PAID" &&
-      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
-    cell.status === "PARTIAL" &&
-      "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
-    cell.status === "UNPAID" &&
-      "bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400",
-    cell.status === "UPCOMING" && "cursor-default text-muted-foreground",
+    "min-w-[52px] cursor-pointer px-1 py-1 text-center text-xs font-normal transition-colors",
+    excelCellBorder,
+    "group-hover:bg-[#d8e9f8]",
+    cell.status === "PAID" && "bg-[#e2efda] text-[#375623]",
+    cell.status === "PARTIAL" && "bg-[#fff2cc] text-[#7f6000]",
+    cell.status === "UNPAID" && "bg-[#fce4d6] text-[#c65911]",
+    cell.status === "UPCOMING" && "cursor-default bg-white text-[#808080]",
   );
 }
 
@@ -103,6 +113,48 @@ function getDefaultAmount(
   return student.monthlyFee;
 }
 
+type IndexedFeeStudent = {
+  student: FeeRegisterStudent;
+  originalIndex: number;
+};
+
+function getFeePaymentSortValue(
+  student: FeeRegisterStudent,
+  month: number,
+): number {
+  const cell = student.payments[month];
+  if (!cell || cell.status === "UPCOMING") {
+    return -2;
+  }
+  if (cell.status === "UNPAID") {
+    return -1;
+  }
+  if (cell.status === "PARTIAL") {
+    return cell.amount;
+  }
+  return student.monthlyFee;
+}
+
+function getFeeSortValue(entry: IndexedFeeStudent, sortKey: string): string | number {
+  const { student, originalIndex } = entry;
+
+  if (sortKey === "serialNumber") {
+    return originalIndex;
+  }
+  if (sortKey === "name") {
+    return student.name;
+  }
+  if (sortKey === "className") {
+    return student.className;
+  }
+  if (sortKey.startsWith("month-")) {
+    const month = Number(sortKey.slice(6));
+    return getFeePaymentSortValue(student, month);
+  }
+
+  return originalIndex;
+}
+
 export function StudentFeeRegister({
   register,
   basePath,
@@ -120,6 +172,8 @@ export function StudentFeeRegister({
   );
   const [classId, setClassId] = useState("");
   const [nameSearch, setNameSearch] = useState("");
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [selectedCell, setSelectedCell] = useState<SelectedCell | null>(null);
   const [amountInput, setAmountInput] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -229,6 +283,24 @@ export function StudentFeeRegister({
     );
   }, [register.students, nameSearch]);
 
+  const sortedStudents = useMemo(() => {
+    const indexedStudents = filteredStudents.map((student, index) => ({
+      student,
+      originalIndex: index,
+    }));
+
+    return sortRows(indexedStudents, sortKey, sortDirection, getFeeSortValue).map(
+      (entry) => entry.student,
+    );
+  }, [filteredStudents, sortDirection, sortKey]);
+
+  function handleSort(nextKey: string) {
+    setSortDirection((currentDirection) =>
+      nextSortDirection(sortKey, nextKey, currentDirection),
+    );
+    setSortKey(nextKey);
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -296,13 +368,13 @@ export function StudentFeeRegister({
 
           <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
             <span>
-              <span className="font-semibold text-emerald-700">P</span> = Paid
+              <span className="font-semibold text-[#375623]">P</span> = Paid
             </span>
             <span>
-              <span className="font-semibold text-amber-700">P</span> = Partial
+              <span className="font-semibold text-[#7f6000]">P</span> = Partial
             </span>
             <span>
-              <span className="font-semibold text-orange-700">U</span> = Unpaid
+              <span className="font-semibold text-[#c65911]">U</span> = Unpaid
             </span>
             <span>
               <span className="font-semibold">-</span> = Upcoming
@@ -332,49 +404,93 @@ export function StudentFeeRegister({
                 </p>
               ) : null}
 
-              {filteredStudents.length > 0 ? (
+              {sortedStudents.length > 0 ? (
                 <>
-              <div className="hidden overflow-x-auto rounded-lg border md:block">
-                <table className="w-max min-w-full border-collapse text-sm">
+              <div className="hidden overflow-x-auto border border-[#b4b4b4] bg-white md:block">
+                <table className="w-max min-w-full border-collapse text-[13px] leading-tight">
                   <thead>
-                    <tr className="border-b bg-muted/40">
-                      <th className="sticky left-0 z-20 min-w-16 border-r bg-muted/40 px-3 py-2 text-left font-medium">
-                        S.No.
-                      </th>
-                      <th className="sticky left-24 z-20 min-w-36 border-r bg-muted/40 px-3 py-2 text-left font-medium">
-                        Name
-                      </th>
-                      <th className="sticky left-[15rem] z-20 min-w-24 border-r bg-muted/40 px-3 py-2 text-left font-medium">
-                        Class
-                      </th>
-                      <th className="sticky left-[21rem] z-20 min-w-24 border-r bg-muted/40 px-3 py-2 text-right font-medium">
-                        Fee/mo
-                      </th>
+                    <tr>
+                      <SortableTableHead
+                        label="S.No."
+                        sortKey="serialNumber"
+                        activeSortKey={sortKey}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                        variant="excel"
+                        className={cn(
+                          "sticky left-0 z-20 min-w-12 px-2 py-1.5",
+                          excelHeaderClass,
+                        )}
+                      />
+                      <SortableTableHead
+                        label="Name"
+                        sortKey="name"
+                        activeSortKey={sortKey}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                        variant="excel"
+                        className={cn(
+                          "sticky left-12 z-20 min-w-40 px-2 py-1.5",
+                          excelHeaderClass,
+                        )}
+                      />
+                      <SortableTableHead
+                        label="Class"
+                        sortKey="className"
+                        activeSortKey={sortKey}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                        variant="excel"
+                        className={cn(
+                          "sticky left-[13rem] z-20 min-w-24 px-2 py-1.5",
+                          excelHeaderClass,
+                        )}
+                      />
                       {register.months.map(({ month, label, calendarYear }) => (
-                        <th
+                        <SortableTableHead
                           key={month}
-                          className="min-w-10 border-r px-1 py-2 text-center text-xs font-medium"
+                          label={label}
+                          sortKey={`month-${month}`}
+                          activeSortKey={sortKey}
+                          sortDirection={sortDirection}
+                          onSort={handleSort}
+                          align="center"
                           title={`${label} ${calendarYear}`}
-                        >
-                          {label}
-                        </th>
+                          variant="excel"
+                          className={cn(
+                            "min-w-[52px] px-1 py-1.5 text-xs",
+                            excelHeaderClass,
+                          )}
+                        />
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredStudents.map((student, index) => (
-                      <tr key={student.id} className="hover:bg-muted/20">
-                        <td className="sticky left-0 z-10 border-r bg-background px-3 py-2">
+                    {sortedStudents.map((student, index) => (
+                      <tr key={student.id} className="group">
+                        <td
+                          className={cn(
+                            "sticky left-0 z-10",
+                            excelBodyCellClass,
+                          )}
+                        >
                           {index + 1}
                         </td>
-                        <td className="sticky left-24 z-10 border-r bg-background px-3 py-2">
+                        <td
+                          className={cn(
+                            "sticky left-12 z-10",
+                            excelBodyCellClass,
+                          )}
+                        >
                           {student.name}
                         </td>
-                        <td className="sticky left-[15rem] z-10 border-r bg-background px-3 py-2">
+                        <td
+                          className={cn(
+                            "sticky left-[13rem] z-10",
+                            excelBodyCellClass,
+                          )}
+                        >
                           {student.className}
-                        </td>
-                        <td className="sticky left-[21rem] z-10 border-r bg-background px-3 py-2 text-right">
-                          {formatCurrency(student.monthlyFee)}
                         </td>
                         {register.months.map(({ month, label }) => {
                           const cell = student.payments[month] ?? {
@@ -406,14 +522,14 @@ export function StudentFeeRegister({
               </div>
 
               <div className="space-y-3 md:hidden">
-                {filteredStudents.map((student, index) => (
+                {sortedStudents.map((student, index) => (
                   <div key={student.id} className="rounded-lg border p-3">
                     <div className="mb-2 space-y-1">
                       <p className="font-medium">
                         {index + 1}. {student.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {student.className} · {formatCurrency(student.monthlyFee)}/mo
+                        {student.className}
                       </p>
                     </div>
                     <div className="grid grid-cols-4 gap-1">
