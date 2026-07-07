@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -22,17 +21,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   type AttendanceRegister,
+  type BulkPunchSummary,
   type CellSymbol,
   type RegisterTeacher,
+  bulkPunchIn,
+  bulkPunchOut,
   getTeacherSummary,
   declareHoliday,
   formatDate,
   getCellSymbol,
+  getCurrentTimeValue,
   isSunday,
   recordKey,
   removeHoliday,
+  todayDateString,
 } from "@/lib/attendance";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -63,6 +69,57 @@ type SelectedCell = {
 };
 
 type HolidayAction = "declare" | "remove";
+
+type BulkPunchAction = "punch-in" | "punch-out";
+
+function isDateInRegisterMonth(
+  date: string,
+  register: AttendanceRegister,
+): boolean {
+  const [year, month] = date.split("-").map(Number);
+  return year === register.year && month === register.month;
+}
+
+function getBulkEligibility(
+  register: AttendanceRegister,
+  bulkDate: string,
+): { punchInCount: number; punchOutCount: number } {
+  let punchInCount = 0;
+  let punchOutCount = 0;
+  const inMonth = isDateInRegisterMonth(bulkDate, register);
+
+  for (const teacher of register.teachers) {
+    const record = inMonth
+      ? register.records[recordKey(teacher.id, bulkDate)]
+      : undefined;
+
+    if (!record) {
+      punchInCount++;
+    } else if (
+      record.status === "IN_PROGRESS" &&
+      record.punchIn &&
+      !record.punchOut
+    ) {
+      punchOutCount++;
+    }
+  }
+
+  return { punchInCount, punchOutCount };
+}
+
+function formatBulkSummaryMessage(
+  action: BulkPunchAction,
+  summary: BulkPunchSummary,
+): string {
+  const verb = action === "punch-in" ? "Punched in" : "Punched out";
+  const base = `${verb} ${summary.processed} teacher${summary.processed === 1 ? "" : "s"}.`;
+
+  if (summary.skipped === 0) {
+    return base;
+  }
+
+  return `${base} ${summary.skipped} skipped.`;
+}
 
 const selectClassName =
   "h-8 rounded-md border border-input bg-background px-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30";
@@ -111,6 +168,14 @@ export function TeacherAttendanceRegister({
   const [error, setError] = useState<string | null>(null);
   const [pendingHolidayDay, setPendingHolidayDay] = useState<number | null>(null);
   const [holidayConfirmOpen, setHolidayConfirmOpen] = useState(false);
+  const [bulkDate, setBulkDate] = useState(todayDateString);
+  const [bulkTime, setBulkTime] = useState(getCurrentTimeValue);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkSummary, setBulkSummary] = useState<string | null>(null);
+  const [pendingBulkAction, setPendingBulkAction] =
+    useState<BulkPunchAction | null>(null);
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
 
   const yearOptions = useMemo(
     () => Array.from({ length: 5 }, (_, index) => currentYear - 2 + index),
@@ -140,6 +205,69 @@ export function TeacherAttendanceRegister({
     pendingHolidayDay === null
       ? ""
       : formatHolidayLabel(register.year, register.month, pendingHolidayDay);
+
+  const bulkEligibility = useMemo(
+    () => getBulkEligibility(register, bulkDate),
+    [register, bulkDate],
+  );
+
+  const isBulkDateHoliday =
+    isSunday(bulkDate) ||
+    (isDateInRegisterMonth(bulkDate, register) && holidaySet.has(bulkDate));
+
+  const canBulkPunchIn =
+    register.teachers.length > 0 &&
+    !isBulkDateHoliday &&
+    bulkEligibility.punchInCount > 0 &&
+    !bulkLoading;
+
+  const canBulkPunchOut =
+    register.teachers.length > 0 &&
+    !isBulkDateHoliday &&
+    bulkEligibility.punchOutCount > 0 &&
+    !bulkLoading;
+
+  function requestBulkAction(action: BulkPunchAction): void {
+    setBulkError(null);
+    setBulkSummary(null);
+    setPendingBulkAction(action);
+    setBulkConfirmOpen(true);
+  }
+
+  function handleBulkConfirmOpenChange(open: boolean): void {
+    setBulkConfirmOpen(open);
+    if (!open) {
+      setPendingBulkAction(null);
+    }
+  }
+
+  async function confirmBulkAction(): Promise<void> {
+    if (!pendingBulkAction) {
+      return;
+    }
+
+    setBulkLoading(true);
+    setBulkError(null);
+    setBulkSummary(null);
+    setBulkConfirmOpen(false);
+
+    try {
+      const input = { date: bulkDate, time: bulkTime };
+      const summary =
+        pendingBulkAction === "punch-in"
+          ? await bulkPunchIn(input)
+          : await bulkPunchOut(input);
+
+      setBulkSummary(formatBulkSummaryMessage(pendingBulkAction, summary));
+      setPendingBulkAction(null);
+      router.refresh();
+    } catch (err) {
+      setBulkError(err instanceof ApiError ? err.message : "Bulk action failed");
+      setPendingBulkAction(null);
+    } finally {
+      setBulkLoading(false);
+    }
+  }
 
   function applyFilters(): void {
     const params = new URLSearchParams({
@@ -225,11 +353,6 @@ export function TeacherAttendanceRegister({
           <CardTitle>
             Attendance for {MONTH_NAMES[register.month - 1]} {register.year}
           </CardTitle>
-          <CardDescription>
-            Monthly register — all teachers. Click any cell to edit attendance.
-            Click a date number in the column header to declare or remove a
-            holiday; you will be asked to confirm before the change is applied.
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-end gap-3">
@@ -273,25 +396,81 @@ export function TeacherAttendanceRegister({
             </Button>
           </div>
 
+          {register.teachers.length > 0 && (
+            <>
+              <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-muted/20 p-4">
+                <p className="w-full text-sm font-medium sm:mr-1 sm:w-auto">
+                  Bulk punch
+                </p>
+                <div className="space-y-1">
+                  <Label htmlFor="bulk-date" className="text-xs text-muted-foreground">
+                    Date
+                  </Label>
+                  <Input
+                    id="bulk-date"
+                    type="date"
+                    className="h-8 w-[10.5rem] text-sm"
+                    value={bulkDate}
+                    onChange={(event) => setBulkDate(event.target.value)}
+                    disabled={bulkLoading}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="bulk-time" className="text-xs text-muted-foreground">
+                    Time
+                  </Label>
+                  <Input
+                    id="bulk-time"
+                    type="time"
+                    className="h-8 w-[7.5rem] text-sm"
+                    value={bulkTime}
+                    onChange={(event) => setBulkTime(event.target.value)}
+                    disabled={bulkLoading}
+                  />
+                </div>
+                <Button
+                  disabled={!canBulkPunchIn}
+                  onClick={() => requestBulkAction("punch-in")}
+                >
+                  {bulkLoading && pendingBulkAction === "punch-in"
+                    ? "Punching in..."
+                    : "Punch In All"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={!canBulkPunchOut}
+                  onClick={() => requestBulkAction("punch-out")}
+                >
+                  {bulkLoading && pendingBulkAction === "punch-out"
+                    ? "Punching out..."
+                    : "Punch Out All"}
+                </Button>
+              </div>
+
+              {bulkSummary && (
+                <Alert>
+                  <AlertDescription>{bulkSummary}</AlertDescription>
+                </Alert>
+              )}
+            </>
+          )}
+
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
+          {bulkError && (
+            <Alert variant="destructive">
+              <AlertDescription>{bulkError}</AlertDescription>
+            </Alert>
+          )}
+
           {register.teachers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No teachers found. Add teachers before managing attendance.
-            </p>
+            <p className="text-sm text-muted-foreground">No teachers found.</p>
           ) : (
             <>
-              <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-                To declare a holiday, click a{" "}
-                <span className="font-medium text-foreground">date number</span>{" "}
-                in the column header. Sundays are automatic holidays and cannot
-                be changed. Declared holidays are highlighted in violet.
-              </div>
-
               <div className="scroll-hint hidden overflow-x-auto rounded-lg border md:block">
                 <table className="w-full min-w-[1100px] border-collapse text-sm">
                   <thead>
@@ -429,41 +608,6 @@ export function TeacherAttendanceRegister({
               </div>
             </>
           )}
-
-          <div className="hidden flex-wrap gap-4 text-xs text-muted-foreground md:flex">
-            <span>
-              <span className="font-semibold text-emerald-600">P</span> Present
-            </span>
-            <span>
-              <span className="font-semibold text-orange-700">A</span> Absent
-            </span>
-            <span>
-              <span className="font-semibold text-violet-600">H</span> Holiday
-            </span>
-            <span>
-              <span className="font-semibold text-sky-600">IP</span> In Progress
-            </span>
-            <span>
-              <span className="font-semibold">-</span> Not Marked
-            </span>
-            <span className="text-muted-foreground/80">|</span>
-            <span>
-              <span className="inline-block rounded bg-emerald-50 px-1 text-emerald-800 dark:bg-emerald-950/20">
-                Sun
-              </span>{" "}
-              Sunday (automatic)
-            </span>
-            <span>
-              <span className="inline-block rounded bg-violet-100 px-1 text-violet-800 ring-1 ring-violet-300 dark:bg-violet-950/40 dark:text-violet-300">
-                H
-              </span>{" "}
-              Declared holiday (click header to remove)
-            </span>
-            <span className="text-muted-foreground/80">
-              Late and Half Day are derived from punch times vs each
-              teacher&apos;s schedule.
-            </span>
-          </div>
         </CardContent>
       </Card>
 
@@ -489,24 +633,7 @@ export function TeacherAttendanceRegister({
                 : "Declare holiday"}
             </DialogTitle>
             <DialogDescription>
-              {pendingHolidayAction === "remove" ? (
-                <>
-                  Remove holiday for{" "}
-                  <span className="font-medium text-foreground">
-                    {pendingHolidayLabel}
-                  </span>
-                  ? Teachers will be able to have attendance recorded on this
-                  day again.
-                </>
-              ) : (
-                <>
-                  Declare{" "}
-                  <span className="font-medium text-foreground">
-                    {pendingHolidayLabel}
-                  </span>{" "}
-                  as a school holiday? Attendance cannot be edited on this day.
-                </>
-              )}
+              {pendingHolidayLabel}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter showCloseButton={false}>
@@ -524,6 +651,40 @@ export function TeacherAttendanceRegister({
               {pendingHolidayAction === "remove"
                 ? "Remove holiday"
                 : "Declare holiday"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={bulkConfirmOpen} onOpenChange={handleBulkConfirmOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {pendingBulkAction === "punch-out"
+                ? "Punch out all teachers"
+                : "Punch in all teachers"}
+            </DialogTitle>
+            <DialogDescription>
+              {pendingBulkAction === "punch-out"
+                ? `${bulkEligibility.punchOutCount} teachers · ${bulkDate} · ${bulkTime}`
+                : `${bulkEligibility.punchInCount} teachers · ${bulkDate} · ${bulkTime}`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter showCloseButton={false}>
+            <Button
+              variant="outline"
+              onClick={() => handleBulkConfirmOpenChange(false)}
+              disabled={bulkLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void confirmBulkAction()}
+              disabled={bulkLoading}
+            >
+              {pendingBulkAction === "punch-out"
+                ? "Punch Out All"
+                : "Punch In All"}
             </Button>
           </DialogFooter>
         </DialogContent>

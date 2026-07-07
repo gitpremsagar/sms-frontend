@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
 import {
   type AttendanceRegister,
   type CellSymbol,
@@ -76,7 +75,6 @@ export function TeacherAttendanceMobile({
   const [selectedTeacherId, setSelectedTeacherId] = useState(
     register.teachers[0]?.id ?? "",
   );
-  const [legendOpen, setLegendOpen] = useState(false);
 
   const selectedTeacher = register.teachers.find(
     (teacher) => teacher.id === selectedTeacherId,
@@ -93,12 +91,6 @@ export function TeacherAttendanceMobile({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-        Tap a <span className="font-medium text-foreground">date number</span>{" "}
-        above each cell to declare or remove a holiday. Sundays cannot be
-        changed. Violet headers are declared holidays.
-      </div>
-
       <div className="space-y-2">
         <label htmlFor="mobile-teacher" className="text-xs text-muted-foreground">
           Select Teacher
@@ -207,54 +199,6 @@ export function TeacherAttendanceMobile({
             </div>
           );
         })}
-      </div>
-
-      <div className="rounded-lg border border-border">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium"
-          onClick={() => setLegendOpen((open) => !open)}
-          aria-expanded={legendOpen}
-        >
-          Legend
-          <ChevronDown
-            className={cn(
-              "size-4 transition-transform",
-              legendOpen && "rotate-180",
-            )}
-          />
-        </button>
-        {legendOpen ? (
-          <div className="flex flex-wrap gap-3 border-t border-border px-4 py-3 text-xs text-muted-foreground">
-            <span>
-              <span className="font-semibold text-emerald-600">P</span> Present
-            </span>
-            <span>
-              <span className="font-semibold text-orange-700">A</span> Absent
-            </span>
-            <span>
-              <span className="font-semibold text-violet-600">H</span> Holiday
-            </span>
-            <span>
-              <span className="font-semibold text-sky-600">IP</span> In Progress
-            </span>
-            <span>
-              <span className="font-semibold">-</span> Not Marked
-            </span>
-            <span>
-              <span className="inline-block rounded bg-emerald-50 px-1 text-emerald-800 dark:bg-emerald-950/20">
-                Sun
-              </span>{" "}
-              Sunday (automatic)
-            </span>
-            <span>
-              <span className="inline-block rounded bg-violet-100 px-1 text-violet-800 ring-1 ring-violet-300 dark:bg-violet-950/40 dark:text-violet-300">
-                H
-              </span>{" "}
-              Declared holiday
-            </span>
-          </div>
-        ) : null}
       </div>
     </div>
   );

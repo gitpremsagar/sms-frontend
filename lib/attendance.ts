@@ -41,6 +41,29 @@ export type TeacherDateInput = {
   time?: string;
 };
 
+export type BulkPunchInput = {
+  date: string;
+  time?: string;
+};
+
+export type BulkPunchSkippedTeacher = {
+  id: string;
+  name: string;
+  reason: string;
+};
+
+export type BulkPunchSummary = {
+  date: string;
+  processed: number;
+  skipped: number;
+  skippedTeachers: BulkPunchSkippedTeacher[];
+};
+
+export function todayDateString(): string {
+  const now = new Date();
+  return formatDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
+}
+
 export function getCurrentTimeValue(): string {
   const now = new Date();
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -79,6 +102,28 @@ export async function punchOut(input: TeacherDateInput): Promise<AttendanceRecor
     },
   );
   return data.record;
+}
+
+export async function bulkPunchIn(input: BulkPunchInput): Promise<BulkPunchSummary> {
+  const data = await apiFetch<{ summary: BulkPunchSummary }>(
+    "/api/attendance/bulk-punch-in",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+  return data.summary;
+}
+
+export async function bulkPunchOut(input: BulkPunchInput): Promise<BulkPunchSummary> {
+  const data = await apiFetch<{ summary: BulkPunchSummary }>(
+    "/api/attendance/bulk-punch-out",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+  return data.summary;
 }
 
 export async function markAbsent(input: TeacherDateInput): Promise<AttendanceRecord> {
