@@ -95,22 +95,14 @@ export function FeeCollectionReport({ report }: FeeCollectionReportProps) {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-lg border bg-emerald-50/50 p-4 dark:bg-emerald-950/20">
-              <p className="text-xs text-muted-foreground">Total Collected</p>
-              <p className="text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
-                {formatCurrency(report.summary.totalCollected)}
-              </p>
-            </div>
-            <div className="rounded-lg border bg-orange-50/50 p-4 dark:bg-orange-950/20">
-              <p className="text-xs text-muted-foreground">Total Due</p>
-              <p className="text-[11px] text-muted-foreground">
-                Excludes the current month
-              </p>
-              <p className="text-2xl font-semibold text-orange-700 dark:text-orange-400">
-                {formatCurrency(report.summary.totalDue)}
-              </p>
-            </div>
+          <div className="rounded-lg border bg-orange-50/50 p-4 dark:bg-orange-950/20 sm:max-w-sm">
+            <p className="text-xs text-muted-foreground">Total Due</p>
+            <p className="text-[11px] text-muted-foreground">
+              Excludes the current month
+            </p>
+            <p className="text-2xl font-semibold text-orange-700 dark:text-orange-400">
+              {formatCurrency(report.summary.totalDue)}
+            </p>
           </div>
 
           <div>

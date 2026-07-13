@@ -20,6 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
 import {
   formatDate,
@@ -70,22 +72,20 @@ type SelectedCell = {
 function cellClassName(symbol: string, isHolidayColumn: boolean): string {
   return cn(
     "min-w-8 cursor-pointer border-r px-1 py-2 text-center text-xs font-semibold transition-colors hover:bg-muted/50",
-    isHolidayColumn && "cursor-default bg-emerald-50 text-emerald-800 dark:bg-emerald-950/20",
+    isHolidayColumn &&
+      "cursor-default bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300",
     symbol === "P" && !isHolidayColumn && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30",
     symbol === "A" && !isHolidayColumn && "bg-orange-50 text-orange-700 dark:bg-orange-950/30",
     symbol === "-" && !isHolidayColumn && "text-muted-foreground",
-    symbol === "H" && "text-emerald-800 dark:text-emerald-300",
+    symbol === "H" && "text-sky-800 dark:text-sky-300",
   );
 }
 
-function dateHeaderClassName(isSundayColumn: boolean, isDeclared: boolean): string {
+function dateHeaderClassName(isHolidayColumn: boolean): string {
   return cn(
     "min-w-8 border-r px-1 py-2 text-center text-xs font-medium",
-    isSundayColumn &&
-      "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300",
-    isDeclared &&
-      !isSundayColumn &&
-      "bg-violet-100 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300",
+    isHolidayColumn &&
+      "bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300",
   );
 }
 
@@ -101,6 +101,7 @@ export function StudentAttendanceRegister({
   const [year, setYear] = useState(register.year);
   const [month, setMonth] = useState(register.month);
   const [classId, setClassId] = useState(register.classId);
+  const [nameSearch, setNameSearch] = useState("");
   const [selectedCell, setSelectedCell] = useState<SelectedCell | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -111,6 +112,16 @@ export function StudentAttendanceRegister({
     () => new Set(register.declaredHolidays),
     [register.declaredHolidays],
   );
+
+  const filteredStudents = useMemo(() => {
+    const normalizedSearch = nameSearch.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return register.students;
+    }
+    return register.students.filter((student) =>
+      student.name.toLowerCase().includes(normalizedSearch),
+    );
+  }, [register.students, nameSearch]);
 
   const yearOptions = useMemo(() => {
     const currentYear = now.getFullYear();
@@ -308,92 +319,112 @@ export function StudentAttendanceRegister({
               No active students in this class.
             </p>
           ) : (
-            <div className="scroll-hint overflow-x-auto rounded-lg border">
-              <table className="w-full min-w-[900px] border-collapse text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/40 text-left text-muted-foreground">
-                    <th className="sticky left-0 z-10 min-w-[72px] border-r bg-muted/40 px-3 py-2 font-medium">
-                      Roll
-                    </th>
-                    <th className="sticky left-[72px] z-10 min-w-[140px] border-r bg-muted/40 px-3 py-2 font-medium">
-                      Name
-                    </th>
-                    {Array.from({ length: register.daysInMonth }, (_, index) => {
-                      const day = index + 1;
-                      const date = formatDate(register.year, register.month, day);
-                      const isSundayColumn = isSunday(date);
-                      const isDeclared = declaredHolidaySet.has(date);
+            <>
+              <div className="w-full space-y-2 sm:max-w-sm">
+                <Label htmlFor="attendance-student-search">Search by Name</Label>
+                <Input
+                  id="attendance-student-search"
+                  type="search"
+                  placeholder="Search students..."
+                  value={nameSearch}
+                  onChange={(event) => setNameSearch(event.target.value)}
+                />
+              </div>
 
-                      return (
-                        <th
-                          key={day}
-                          className={dateHeaderClassName(isSundayColumn, isDeclared)}
-                          title={
-                            isSundayColumn
-                              ? "Sunday (holiday)"
-                              : isDeclared
-                                ? "Declared holiday"
-                                : undefined
-                          }
-                        >
-                          {isDeclared && !isSundayColumn ? (
-                            <span className="inline-flex flex-col items-center leading-tight">
-                              <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400">
-                                H
-                              </span>
-                              <span>{day}</span>
-                            </span>
-                          ) : (
-                            day
-                          )}
+              {filteredStudents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No students match your search.
+                </p>
+              ) : (
+                <div className="scroll-hint overflow-x-auto rounded-lg border">
+                  <table className="w-full min-w-[900px] border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/40 text-left text-muted-foreground">
+                        <th className="sticky left-0 z-10 min-w-[72px] border-r bg-muted/40 px-3 py-2 font-medium">
+                          Roll
                         </th>
-                      );
-                    })}
-                    <th className="min-w-[56px] px-2 py-2 text-center font-medium">
-                      Present
-                    </th>
-                    <th className="min-w-[56px] px-2 py-2 text-center font-medium">
-                      Absent
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {register.students.map((student) => (
-                    <tr key={student.id} className="border-b last:border-0">
-                      <td className="sticky left-0 z-10 border-r bg-background px-3 py-2 text-xs">
-                        {student.rollNumber}
-                      </td>
-                      <td className="sticky left-[72px] z-10 border-r bg-background px-3 py-2 font-medium">
-                        {student.name}
-                      </td>
-                      {Array.from({ length: register.daysInMonth }, (_, index) => {
-                        const day = index + 1;
-                        const date = formatDate(register.year, register.month, day);
-                        const record = register.records[recordKey(student.id, date)];
-                        const isHolidayColumn = holidaySet.has(date);
-                        const symbol = getCellSymbol(isHolidayColumn, record);
+                        <th className="sticky left-[72px] z-10 min-w-[140px] border-r bg-muted/40 px-3 py-2 font-medium">
+                          Name
+                        </th>
+                        {Array.from({ length: register.daysInMonth }, (_, index) => {
+                          const day = index + 1;
+                          const date = formatDate(register.year, register.month, day);
+                          const isSundayColumn = isSunday(date);
+                          const isDeclared = declaredHolidaySet.has(date);
+                          const isHolidayColumn = holidaySet.has(date);
 
-                        return (
-                          <td
-                            key={day}
-                            className={cellClassName(symbol, isHolidayColumn)}
-                            onClick={() => openCell(student, day)}
-                          >
-                            {symbol}
+                          return (
+                            <th
+                              key={day}
+                              className={dateHeaderClassName(isHolidayColumn)}
+                              title={
+                                isSundayColumn
+                                  ? "Sunday (holiday)"
+                                  : isDeclared
+                                    ? "Declared holiday"
+                                    : undefined
+                              }
+                            >
+                              {isDeclared && !isSundayColumn ? (
+                                <span className="inline-flex flex-col items-center leading-tight">
+                                  <span className="text-[9px] font-bold text-sky-700 dark:text-sky-400">
+                                    H
+                                  </span>
+                                  <span>{day}</span>
+                                </span>
+                              ) : (
+                                day
+                              )}
+                            </th>
+                          );
+                        })}
+                        <th className="min-w-[56px] px-2 py-2 text-center font-medium">
+                          Present
+                        </th>
+                        <th className="min-w-[56px] px-2 py-2 text-center font-medium">
+                          Absent
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredStudents.map((student) => (
+                        <tr key={student.id} className="border-b last:border-0">
+                          <td className="sticky left-0 z-10 border-r bg-background px-3 py-2 text-xs">
+                            {student.rollNumber}
                           </td>
-                        );
-                      })}
-                      <td className="px-2 py-2 text-center font-medium text-emerald-600">
-                        {register.summaries[student.id]?.present ?? 0}
-                      </td>
-                      <td className="px-2 py-2 text-center font-medium text-orange-700">
-                        {register.summaries[student.id]?.absent ?? 0}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                          <td className="sticky left-[72px] z-10 border-r bg-background px-3 py-2 font-medium">
+                            {student.name}
+                          </td>
+                          {Array.from({ length: register.daysInMonth }, (_, index) => {
+                            const day = index + 1;
+                            const date = formatDate(register.year, register.month, day);
+                            const record = register.records[recordKey(student.id, date)];
+                            const isHolidayColumn = holidaySet.has(date);
+                            const symbol = getCellSymbol(isHolidayColumn, record);
+
+                            return (
+                              <td
+                                key={day}
+                                className={cellClassName(symbol, isHolidayColumn)}
+                                onClick={() => openCell(student, day)}
+                              >
+                                {symbol}
+                              </td>
+                            );
+                          })}
+                          <td className="px-2 py-2 text-center font-medium text-emerald-600">
+                            {register.summaries[student.id]?.present ?? 0}
+                          </td>
+                          <td className="px-2 py-2 text-center font-medium text-orange-700">
+                            {register.summaries[student.id]?.absent ?? 0}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
 
           <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
@@ -404,7 +435,7 @@ export function StudentAttendanceRegister({
               <span className="font-semibold text-orange-700">A</span> Absent
             </span>
             <span>
-              <span className="font-semibold text-violet-600">H</span> Holiday
+              <span className="font-semibold text-sky-700">H</span> Holiday
             </span>
             <span>
               <span className="font-semibold">-</span> Not Marked
