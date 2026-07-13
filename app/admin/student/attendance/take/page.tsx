@@ -83,7 +83,7 @@ export default async function AdminStudentAttendanceTakePage({
   }
 
   const registerPath = `/admin/student/attendance/register?classId=${classId}`;
-  const takePath = `/admin/student/attendance/take?classId=${classId}`;
+  const takePath = `/admin/student/attendance/take`;
 
   return (
     <div className="space-y-6">
