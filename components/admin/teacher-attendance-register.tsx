@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AttendanceCellModal } from "@/components/admin/attendance-cell-modal";
 import { TeacherAttendanceMobile } from "@/components/admin/teacher-attendance-mobile";
+import { WallQrDialog } from "@/components/admin/wall-qr-dialog";
 import { BackLink } from "@/components/ui/back-link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -176,6 +177,7 @@ export function TeacherAttendanceRegister({
   const [pendingBulkAction, setPendingBulkAction] =
     useState<BulkPunchAction | null>(null);
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [wallQrOpen, setWallQrOpen] = useState(false);
 
   const yearOptions = useMemo(
     () => Array.from({ length: 5 }, (_, index) => currentYear - 2 + index),
@@ -349,10 +351,13 @@ export function TeacherAttendanceRegister({
       <BackLink href="/admin/teachers">← Back to Teachers</BackLink>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
           <CardTitle>
             Attendance for {MONTH_NAMES[register.month - 1]} {register.year}
           </CardTitle>
+          <Button variant="outline" onClick={() => setWallQrOpen(true)}>
+            Download wall QR
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-end gap-3">
@@ -689,6 +694,8 @@ export function TeacherAttendanceRegister({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <WallQrDialog open={wallQrOpen} onOpenChange={setWallQrOpen} />
     </div>
   );
 }

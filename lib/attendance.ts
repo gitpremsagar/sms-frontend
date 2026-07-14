@@ -82,6 +82,10 @@ export function isSunday(date: string): boolean {
   return new Date(year, month - 1, day).getDay() === 0;
 }
 
+export async function getWallQr(): Promise<{ url: string }> {
+  return apiFetch<{ url: string }>("/api/attendance/wall-qr");
+}
+
 export async function punchIn(input: TeacherDateInput): Promise<AttendanceRecord> {
   const data = await apiFetch<{ record: AttendanceRecord }>(
     "/api/attendance/punch-in",
