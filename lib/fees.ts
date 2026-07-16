@@ -5,6 +5,7 @@ export type FeePaymentCellStatus = "PAID" | "PARTIAL" | "UNPAID" | "UPCOMING";
 export type FeePaymentCell = {
   status: FeePaymentCellStatus;
   amount: number;
+  paymentDate: string | null;
 };
 
 export type FeeRegisterStudent = {

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   feeCellColorClass,
   feeStatusSymbolFromCell,
+  formatFeePaymentDate,
   FeePaymentLegend,
 } from "@/components/fees/fee-payment-ui";
 import {
@@ -37,6 +38,7 @@ function getCell(
     student.payments[month] ?? {
       status: "UPCOMING" as const,
       amount: 0,
+      paymentDate: null,
     }
   );
 }
@@ -148,6 +150,7 @@ export function StudentFeeRegisterMobile({
         {register.months.map(({ month, label }) => {
           const cell = getCell(selectedStudent, month);
           const isUpcoming = cell.status === "UPCOMING";
+          const paymentDateLabel = formatFeePaymentDate(cell.paymentDate);
 
           return (
             <button
@@ -166,6 +169,11 @@ export function StudentFeeRegisterMobile({
               <span className="text-sm font-semibold">
                 {feeStatusSymbolFromCell(cell)}
               </span>
+              {paymentDateLabel ? (
+                <span className="text-[10px] font-normal leading-none">
+                  {paymentDateLabel}
+                </span>
+              ) : null}
               {cell.status === "PARTIAL" ? (
                 <span className="text-[10px] font-normal">
                   {formatCurrency(cell.amount)}

@@ -4,6 +4,7 @@ export type AttendanceStatus = "IN_PROGRESS" | "PRESENT" | "ABSENT";
 
 export type AttendanceRecord = {
   status: AttendanceStatus;
+  absenceReason: string | null;
   punchIn: string | null;
   punchOut: string | null;
 };
@@ -39,6 +40,12 @@ export type TeacherDateInput = {
   teacherId: string;
   date: string;
   time?: string;
+};
+
+export type MarkAbsentInput = {
+  teacherId: string;
+  date: string;
+  reason: string;
 };
 
 export type BulkPunchInput = {
@@ -130,7 +137,7 @@ export async function bulkPunchOut(input: BulkPunchInput): Promise<BulkPunchSumm
   return data.summary;
 }
 
-export async function markAbsent(input: TeacherDateInput): Promise<AttendanceRecord> {
+export async function markAbsent(input: MarkAbsentInput): Promise<AttendanceRecord> {
   const data = await apiFetch<{ record: AttendanceRecord }>(
     "/api/attendance/mark-absent",
     {

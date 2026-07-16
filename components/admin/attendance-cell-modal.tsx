@@ -61,11 +61,13 @@ export function AttendanceCellModal({
   const [error, setError] = useState<string | null>(null);
   const [punchInTime, setPunchInTime] = useState(getCurrentTimeValue);
   const [punchOutTime, setPunchOutTime] = useState(getCurrentTimeValue);
+  const [absenceReason, setAbsenceReason] = useState("");
 
   const symbol = getCellSymbol(date, isHoliday ? [date] : [], record);
   const hasRecord = Boolean(record);
   const hasPunchIn = Boolean(record?.punchIn);
   const hasPunchOut = Boolean(record?.punchOut);
+  const trimmedAbsenceReason = absenceReason.trim();
   const dayMetrics =
     record?.status === "PRESENT" && teacher
       ? classifyDay(record, teacher, isHoliday)
@@ -75,9 +77,10 @@ export function AttendanceCellModal({
     if (open) {
       setPunchInTime(getPunchTimeInputValue(record?.punchIn ?? null));
       setPunchOutTime(getPunchTimeInputValue(record?.punchOut ?? null));
+      setAbsenceReason(record?.absenceReason ?? "");
       setError(null);
     }
-  }, [open, teacher?.id, date, record?.punchIn, record?.punchOut]);
+  }, [open, teacher?.id, date, record?.punchIn, record?.punchOut, record?.absenceReason]);
 
   async function runAction(
     action: string,
@@ -227,13 +230,34 @@ export function AttendanceCellModal({
               </div>
             </div>
 
+            <div className="space-y-1">
+              <Label htmlFor="absence-reason">Absence reason</Label>
+              <Input
+                id="absence-reason"
+                value={absenceReason}
+                onChange={(event) => setAbsenceReason(event.target.value)}
+                placeholder="Reason for marking absent"
+                disabled={loading !== null || hasPunchIn}
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground">
+                Required when marking the teacher as absent.
+              </p>
+            </div>
+
             <DialogFooter className="flex-wrap gap-2 sm:justify-start">
               <Button
                 variant="outline"
-                disabled={loading !== null || hasPunchIn}
+                disabled={
+                  loading !== null || hasPunchIn || !trimmedAbsenceReason
+                }
                 onClick={() =>
                   runAction("absent", async () => {
-                    await markAbsent({ teacherId: teacher.id, date });
+                    await markAbsent({
+                      teacherId: teacher.id,
+                      date,
+                      reason: trimmedAbsenceReason,
+                    });
                   })
                 }
               >

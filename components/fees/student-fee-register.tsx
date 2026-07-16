@@ -27,6 +27,7 @@ import {
   feeCellColorClass,
   feeStatusLabel,
   feeStatusSymbolFromCell,
+  formatFeePaymentDate,
   FeePaymentLegend,
 } from "@/components/fees/fee-payment-ui";
 import { StudentFeeRegisterMobile } from "@/components/fees/student-fee-register-mobile";
@@ -72,7 +73,7 @@ type SelectedCell = {
 
 function cellClassName(cell: FeePaymentCell): string {
   return cn(
-    "min-w-[52px] cursor-pointer px-1 py-1 text-center text-xs font-normal transition-colors",
+    "min-w-[76px] cursor-pointer px-1 py-1 text-center text-xs font-normal transition-colors",
     excelCellBorder,
     "group-hover:bg-[#d8e9f8]",
     feeCellColorClass(cell.status, { variant: "excel" }),
@@ -466,18 +467,31 @@ export function StudentFeeRegister({
                           const cell = student.payments[month] ?? {
                             status: "UPCOMING" as const,
                             amount: 0,
+                            paymentDate: null,
                           };
+                          const paymentDateLabel = formatFeePaymentDate(
+                            cell.paymentDate,
+                          );
                           return (
                             <td
                               key={month}
                               className={cellClassName(cell)}
                               onClick={() => openCell(student, month, label)}
-                              title={`${student.name} — ${label}`}
+                              title={
+                                paymentDateLabel
+                                  ? `${student.name} — ${label} · Paid ${formatFeePaymentDate(cell.paymentDate)}`
+                                  : `${student.name} — ${label}`
+                              }
                             >
                               <div className="flex flex-col items-center gap-0.5">
                                 <span>{feeStatusSymbolFromCell(cell)}</span>
+                                {paymentDateLabel ? (
+                                  <span className="text-[9px] font-normal leading-none">
+                                    {paymentDateLabel}
+                                  </span>
+                                ) : null}
                                 {cell.status === "PARTIAL" ? (
-                                  <span className="text-[9px] font-normal">
+                                  <span className="text-[9px] font-normal leading-none">
                                     {formatCurrency(cell.amount)}
                                   </span>
                                 ) : null}
@@ -534,6 +548,12 @@ export function StudentFeeRegister({
                 <>
                   {" "}
                   · Paid: {formatCurrency(selectedCell.cell.amount)}
+                </>
+              ) : null}
+              {selectedCell?.cell.paymentDate ? (
+                <>
+                  {" "}
+                  · On: {formatFeePaymentDate(selectedCell.cell.paymentDate)}
                 </>
               ) : null}
             </p>

@@ -21,6 +21,23 @@ export function feeStatusSymbolFromCell(cell: FeePaymentCell): string {
   return feeStatusSymbol(cell.status);
 }
 
+export function formatFeePaymentDate(
+  paymentDate: string | null | undefined,
+): string | null {
+  if (!paymentDate) {
+    return null;
+  }
+
+  const date = new Date(paymentDate);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const day = date.getDate();
+  const month = date.toLocaleDateString("en-IN", { month: "long" });
+  return `${day}/${month}`;
+}
+
 export function feeStatusLabel(status: FeePaymentCellStatus): string {
   if (status === "PAID") {
     return "Paid";
