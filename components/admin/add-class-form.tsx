@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
 import { createClass } from "@/lib/classes";
+import type { ClassKind } from "@/lib/classes";
 import type { Teacher } from "@/lib/teachers";
 
 const selectClassName =
@@ -31,6 +32,7 @@ export function AddClassForm({ teachers }: AddClassFormProps) {
   const [className, setClassName] = useState("");
   const [teacherId, setTeacherId] = useState(teachers[0]?.id ?? "");
   const [monthlyFee, setMonthlyFee] = useState("0");
+  const [kind, setKind] = useState<ClassKind>("SCHOOL");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -44,6 +46,7 @@ export function AddClassForm({ teachers }: AddClassFormProps) {
         className,
         teacherId,
         monthlyFee: Number(monthlyFee) || 0,
+        kind,
       });
       router.push("/admin/classes");
       router.refresh();
@@ -119,6 +122,20 @@ export function AddClassForm({ teachers }: AddClassFormProps) {
                     {teacher.employeeId ? ` (${teacher.employeeId})` : ""}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="kind">Type</Label>
+              <select
+                id="kind"
+                value={kind}
+                onChange={(event) => setKind(event.target.value as ClassKind)}
+                required
+                className={selectClassName}
+              >
+                <option value="SCHOOL">School</option>
+                <option value="COACHING">Coaching</option>
               </select>
             </div>
 

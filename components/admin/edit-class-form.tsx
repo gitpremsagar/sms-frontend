@@ -16,7 +16,7 @@ import { FormActions } from "@/components/ui/form-actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
-import { type SchoolClass, updateClass } from "@/lib/classes";
+import { type ClassKind, type SchoolClass, updateClass } from "@/lib/classes";
 import type { Teacher } from "@/lib/teachers";
 
 const selectClassName =
@@ -32,6 +32,7 @@ export function EditClassForm({ schoolClass, teachers }: EditClassFormProps) {
   const [className, setClassName] = useState(schoolClass.className);
   const [teacherId, setTeacherId] = useState(schoolClass.teacherId);
   const [monthlyFee, setMonthlyFee] = useState(String(schoolClass.monthlyFee));
+  const [kind, setKind] = useState<ClassKind>(schoolClass.kind);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -45,6 +46,7 @@ export function EditClassForm({ schoolClass, teachers }: EditClassFormProps) {
         className,
         teacherId,
         monthlyFee: Number(monthlyFee) || 0,
+        kind,
       });
       router.push("/admin/classes");
       router.refresh();
@@ -82,7 +84,7 @@ export function EditClassForm({ schoolClass, teachers }: EditClassFormProps) {
       <CardHeader>
         <CardTitle>Edit Class</CardTitle>
         <CardDescription>
-          Update class name, assigned teacher, or monthly fee.
+          Update class name, type, assigned teacher, or monthly fee.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -106,6 +108,20 @@ export function EditClassForm({ schoolClass, teachers }: EditClassFormProps) {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="kind">Type</Label>
+              <select
+                id="kind"
+                value={kind}
+                onChange={(event) => setKind(event.target.value as ClassKind)}
+                required
+                className={selectClassName}
+              >
+                <option value="SCHOOL">School</option>
+                <option value="COACHING">Coaching</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="teacherId">Assigned Teacher</Label>
               <select
                 id="teacherId"
@@ -123,7 +139,7 @@ export function EditClassForm({ schoolClass, teachers }: EditClassFormProps) {
               </select>
             </div>
 
-            <div className="space-y-2 sm:col-span-2">
+            <div className="space-y-2">
               <Label htmlFor="monthlyFee">Monthly Fee (₹)</Label>
               <Input
                 id="monthlyFee"

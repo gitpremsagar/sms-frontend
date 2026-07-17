@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ClipboardList, Pencil } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,7 @@ import { ApiError } from "@/lib/api";
 import {
   formatCurrency,
   updateFeePayment,
+  type ClassKind,
   type FeePaymentCell,
   type FeeRegister,
   type FeeRegisterStudent,
@@ -57,6 +59,48 @@ const excelCellBorder = "border border-[#d4d4d4]";
 const excelHeaderClass = "border border-[#d4d4d4] bg-[#f0f0f0] text-[#212121]";
 const excelBodyCellClass =
   "border border-[#d4d4d4] bg-white px-2 py-1 text-[13px] text-[#212121] group-hover:bg-[#d8e9f8]";
+
+function classKindLabel(kind: ClassKind): string {
+  return kind === "COACHING" ? "Coaching" : "School";
+}
+
+function StudentNameLinks({
+  student,
+  showAdminLinks,
+}: {
+  student: FeeRegisterStudent;
+  showAdminLinks: boolean;
+}) {
+  if (!showAdminLinks) {
+    return <>{student.name}</>;
+  }
+
+  const attendanceHref = `/admin/student/attendance/register?classId=${student.classId}&studentId=${student.id}`;
+
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <Link
+        href={`/admin/student/edit-student/${student.id}`}
+        className="inline-flex shrink-0 text-[#555] hover:text-[#0b57d0]"
+        title={`Edit ${student.name}`}
+        aria-label={`Edit ${student.name}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <Pencil className="size-3.5" />
+      </Link>
+      <Link
+        href={attendanceHref}
+        className="inline-flex shrink-0 text-[#555] hover:text-[#0b57d0]"
+        title={`Attendance for ${student.name}`}
+        aria-label={`Attendance for ${student.name}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <ClipboardList className="size-3.5" />
+      </Link>
+      <span>{student.name}</span>
+    </span>
+  );
+}
 
 type StudentFeeRegisterProps = {
   register: FeeRegister;
@@ -139,6 +183,7 @@ export function StudentFeeRegister({
   showReportLink = false,
 }: StudentFeeRegisterProps) {
   const router = useRouter();
+  const showAdminStudentLinks = basePath === "/admin/fees";
   const currentFyStart = getFinancialYearStart();
   const fyOptions = useMemo(
     () => listFinancialYearOptions(currentFyStart, 5),
@@ -157,14 +202,6 @@ export function StudentFeeRegister({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!selectedCell) {
-      return;
-    }
-
-    setAmountInput(String(getDefaultAmount(selectedCell.student, selectedCell.month)));
-  }, [selectedCell]);
 
   function applyFilters() {
     const params = new URLSearchParams({
@@ -189,6 +226,7 @@ export function StudentFeeRegister({
     }
 
     setSelectedCell({ student, month, monthLabel, cell });
+    setAmountInput(String(getDefaultAmount(student, month)));
     setError(null);
     setDialogOpen(true);
   }
@@ -257,7 +295,9 @@ export function StudentFeeRegister({
     }
 
     return register.students.filter((student) =>
-      student.name.toLowerCase().includes(normalizedSearch),
+      [student.name, student.rollNumber, student.className].some((value) =>
+        value.toLowerCase().includes(normalizedSearch),
+      ),
     );
   }, [register.students, nameSearch]);
 
@@ -272,11 +312,177 @@ export function StudentFeeRegister({
     );
   }, [filteredStudents, sortDirection, sortKey]);
 
+  const feeSections = useMemo(
+    () =>
+      (["SCHOOL", "COACHING"] as const)
+        .map((kind) => ({
+          kind,
+          title: `${classKindLabel(kind)} Fee Register`,
+          students: sortedStudents.filter((student) => student.classKind === kind),
+        }))
+        .filter((section) => section.students.length > 0),
+    [sortedStudents],
+  );
+
   function handleSort(nextKey: string) {
     setSortDirection((currentDirection) =>
       nextSortDirection(sortKey, nextKey, currentDirection),
     );
     setSortKey(nextKey);
+  }
+
+  function renderFeeSection(
+    title: string,
+    students: FeeRegisterStudent[],
+  ) {
+    return (
+      <div key={title} className="space-y-3">
+        <div>
+          <h3 className="text-base font-semibold">{title}</h3>
+          <p className="text-sm text-muted-foreground">
+            {students.length} student{students.length === 1 ? "" : "s"}
+          </p>
+        </div>
+
+        <div className="hidden overflow-x-auto border border-[#b4b4b4] bg-white md:block">
+          <table className="w-max min-w-full border-collapse text-[13px] leading-tight">
+            <thead>
+              <tr>
+                <SortableTableHead
+                  label="S.No."
+                  sortKey="serialNumber"
+                  activeSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  variant="excel"
+                  className={cn(
+                    "sticky left-0 z-20 min-w-12 px-2 py-1.5",
+                    excelHeaderClass,
+                  )}
+                />
+                <SortableTableHead
+                  label="Name"
+                  sortKey="name"
+                  activeSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  variant="excel"
+                  className={cn(
+                    "sticky left-12 z-20 min-w-40 px-2 py-1.5",
+                    excelHeaderClass,
+                  )}
+                />
+                <SortableTableHead
+                  label="Class"
+                  sortKey="className"
+                  activeSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  variant="excel"
+                  className={cn(
+                    "sticky left-[13rem] z-20 min-w-24 px-2 py-1.5",
+                    excelHeaderClass,
+                  )}
+                />
+                {register.months.map(({ month, label, calendarYear }) => (
+                  <SortableTableHead
+                    key={month}
+                    label={label}
+                    sortKey={`month-${month}`}
+                    activeSortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    align="center"
+                    title={`${label} ${calendarYear}`}
+                    variant="excel"
+                    className={cn(
+                      "min-w-[52px] px-1 py-1.5 text-xs",
+                      excelHeaderClass,
+                    )}
+                  />
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {students.map((student, index) => (
+                <tr key={student.id} className="group">
+                  <td
+                    className={cn(
+                      "sticky left-0 z-10",
+                      excelBodyCellClass,
+                    )}
+                  >
+                    {index + 1}
+                  </td>
+                  <td
+                    className={cn(
+                      "sticky left-12 z-10",
+                      excelBodyCellClass,
+                    )}
+                  >
+                    <StudentNameLinks
+                      student={student}
+                      showAdminLinks={showAdminStudentLinks}
+                    />
+                  </td>
+                  <td
+                    className={cn(
+                      "sticky left-[13rem] z-10",
+                      excelBodyCellClass,
+                    )}
+                  >
+                    {student.className}
+                  </td>
+                  {register.months.map(({ month, label }) => {
+                    const cell = student.payments[month] ?? {
+                      status: "UPCOMING" as const,
+                      amount: 0,
+                      paymentDate: null,
+                    };
+                    const paymentDateLabel = formatFeePaymentDate(
+                      cell.paymentDate,
+                    );
+                    return (
+                      <td
+                        key={month}
+                        className={cellClassName(cell)}
+                        onClick={() => openCell(student, month, label)}
+                        title={
+                          paymentDateLabel
+                            ? `${student.name} — ${label} · Paid ${formatFeePaymentDate(cell.paymentDate)}`
+                            : `${student.name} — ${label}`
+                        }
+                      >
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span>{feeStatusSymbolFromCell(cell)}</span>
+                          {paymentDateLabel ? (
+                            <span className="text-[9px] font-normal leading-none">
+                              {paymentDateLabel}
+                            </span>
+                          ) : null}
+                          {cell.status === "PARTIAL" ? (
+                            <span className="text-[9px] font-normal leading-none">
+                              {formatCurrency(cell.amount)}
+                            </span>
+                          ) : null}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <StudentFeeRegisterMobile
+          register={register}
+          students={students}
+          onCellClick={openCell}
+          showAdminStudentLinks={showAdminStudentLinks}
+        />
+      </div>
+    );
   }
 
   return (
@@ -333,7 +539,7 @@ export function StudentFeeRegister({
                 <option value="">All classes</option>
                 {register.classes.map((cls) => (
                   <option key={cls.id} value={cls.id}>
-                    {cls.className}
+                    {cls.className} ({classKindLabel(cls.kind)})
                   </option>
                 ))}
               </select>
@@ -376,141 +582,11 @@ export function StudentFeeRegister({
               ) : null}
 
               {sortedStudents.length > 0 ? (
-                <>
-              <div className="hidden overflow-x-auto border border-[#b4b4b4] bg-white md:block">
-                <table className="w-max min-w-full border-collapse text-[13px] leading-tight">
-                  <thead>
-                    <tr>
-                      <SortableTableHead
-                        label="S.No."
-                        sortKey="serialNumber"
-                        activeSortKey={sortKey}
-                        sortDirection={sortDirection}
-                        onSort={handleSort}
-                        variant="excel"
-                        className={cn(
-                          "sticky left-0 z-20 min-w-12 px-2 py-1.5",
-                          excelHeaderClass,
-                        )}
-                      />
-                      <SortableTableHead
-                        label="Name"
-                        sortKey="name"
-                        activeSortKey={sortKey}
-                        sortDirection={sortDirection}
-                        onSort={handleSort}
-                        variant="excel"
-                        className={cn(
-                          "sticky left-12 z-20 min-w-40 px-2 py-1.5",
-                          excelHeaderClass,
-                        )}
-                      />
-                      <SortableTableHead
-                        label="Class"
-                        sortKey="className"
-                        activeSortKey={sortKey}
-                        sortDirection={sortDirection}
-                        onSort={handleSort}
-                        variant="excel"
-                        className={cn(
-                          "sticky left-[13rem] z-20 min-w-24 px-2 py-1.5",
-                          excelHeaderClass,
-                        )}
-                      />
-                      {register.months.map(({ month, label, calendarYear }) => (
-                        <SortableTableHead
-                          key={month}
-                          label={label}
-                          sortKey={`month-${month}`}
-                          activeSortKey={sortKey}
-                          sortDirection={sortDirection}
-                          onSort={handleSort}
-                          align="center"
-                          title={`${label} ${calendarYear}`}
-                          variant="excel"
-                          className={cn(
-                            "min-w-[52px] px-1 py-1.5 text-xs",
-                            excelHeaderClass,
-                          )}
-                        />
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedStudents.map((student, index) => (
-                      <tr key={student.id} className="group">
-                        <td
-                          className={cn(
-                            "sticky left-0 z-10",
-                            excelBodyCellClass,
-                          )}
-                        >
-                          {index + 1}
-                        </td>
-                        <td
-                          className={cn(
-                            "sticky left-12 z-10",
-                            excelBodyCellClass,
-                          )}
-                        >
-                          {student.name}
-                        </td>
-                        <td
-                          className={cn(
-                            "sticky left-[13rem] z-10",
-                            excelBodyCellClass,
-                          )}
-                        >
-                          {student.className}
-                        </td>
-                        {register.months.map(({ month, label }) => {
-                          const cell = student.payments[month] ?? {
-                            status: "UPCOMING" as const,
-                            amount: 0,
-                            paymentDate: null,
-                          };
-                          const paymentDateLabel = formatFeePaymentDate(
-                            cell.paymentDate,
-                          );
-                          return (
-                            <td
-                              key={month}
-                              className={cellClassName(cell)}
-                              onClick={() => openCell(student, month, label)}
-                              title={
-                                paymentDateLabel
-                                  ? `${student.name} — ${label} · Paid ${formatFeePaymentDate(cell.paymentDate)}`
-                                  : `${student.name} — ${label}`
-                              }
-                            >
-                              <div className="flex flex-col items-center gap-0.5">
-                                <span>{feeStatusSymbolFromCell(cell)}</span>
-                                {paymentDateLabel ? (
-                                  <span className="text-[9px] font-normal leading-none">
-                                    {paymentDateLabel}
-                                  </span>
-                                ) : null}
-                                {cell.status === "PARTIAL" ? (
-                                  <span className="text-[9px] font-normal leading-none">
-                                    {formatCurrency(cell.amount)}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <StudentFeeRegisterMobile
-                register={register}
-                students={sortedStudents}
-                onCellClick={openCell}
-              />
-                </>
+                <div className="space-y-8">
+                  {feeSections.map((section) =>
+                    renderFeeSection(section.title, section.students),
+                  )}
+                </div>
               ) : null}
             </>
           )}

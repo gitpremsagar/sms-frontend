@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, ClipboardList, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   feeCellColorClass,
@@ -28,6 +29,7 @@ type StudentFeeRegisterMobileProps = {
     month: number,
     monthLabel: string,
   ) => void;
+  showAdminStudentLinks?: boolean;
 };
 
 function getCell(
@@ -47,6 +49,7 @@ export function StudentFeeRegisterMobile({
   register,
   students,
   onCellClick,
+  showAdminStudentLinks = false,
 }: StudentFeeRegisterMobileProps) {
   const [selectedStudentId, setSelectedStudentId] = useState(
     students[0]?.id ?? "",
@@ -136,14 +139,38 @@ export function StudentFeeRegisterMobile({
       </div>
 
       <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-        <p className="font-medium">{selectedStudent.name}</p>
-        <p className="text-sm text-muted-foreground">{selectedStudent.className}</p>
-        <p className="mt-1 text-sm">
-          Monthly fee:{" "}
-          <span className="font-medium">
-            {formatCurrency(selectedStudent.monthlyFee)}
-          </span>
-        </p>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="font-medium">{selectedStudent.name}</p>
+            <p className="text-sm text-muted-foreground">{selectedStudent.className}</p>
+            <p className="mt-1 text-sm">
+              Monthly fee:{" "}
+              <span className="font-medium">
+                {formatCurrency(selectedStudent.monthlyFee)}
+              </span>
+            </p>
+          </div>
+          {showAdminStudentLinks ? (
+            <div className="flex shrink-0 items-center gap-2">
+              <Link
+                href={`/admin/student/edit-student/${selectedStudent.id}`}
+                className="inline-flex rounded-md border border-border bg-background p-2 text-muted-foreground hover:text-foreground"
+                title={`Edit ${selectedStudent.name}`}
+                aria-label={`Edit ${selectedStudent.name}`}
+              >
+                <Pencil className="size-4" />
+              </Link>
+              <Link
+                href={`/admin/student/attendance/register?classId=${selectedStudent.classId}&studentId=${selectedStudent.id}`}
+                className="inline-flex rounded-md border border-border bg-background p-2 text-muted-foreground hover:text-foreground"
+                title={`Attendance for ${selectedStudent.name}`}
+                aria-label={`Attendance for ${selectedStudent.name}`}
+              >
+                <ClipboardList className="size-4" />
+              </Link>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">

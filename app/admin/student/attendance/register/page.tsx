@@ -8,6 +8,7 @@ type AdminStudentAttendanceRegisterPageProps = {
     classId?: string;
     year?: string;
     month?: string;
+    studentId?: string;
   }>;
 };
 
@@ -21,6 +22,7 @@ export default async function AdminStudentAttendanceRegisterPage({
   const year = params.year ? Number(params.year) : now.getFullYear();
   const month = params.month ? Number(params.month) : now.getMonth() + 1;
   const classId = params.classId || undefined;
+  const studentId = params.studentId || undefined;
 
   const register = await getStudentAttendanceRegister(year, month, classId);
 
@@ -44,12 +46,13 @@ export default async function AdminStudentAttendanceRegisterPage({
     <div className="space-y-6">
       <BackLink href="/admin/students">← Back to Students</BackLink>
       <StudentAttendanceRegister
-        key={`${register.classId ?? "all"}-${register.year}-${register.month}`}
+        key={`${register.classId ?? "all"}-${register.year}-${register.month}-${studentId ?? "all"}`}
         register={register}
         scope="admin"
         basePath={registerPath}
         takePath={takePath}
         showClassSelector
+        initialStudentId={studentId}
       />
     </div>
   );

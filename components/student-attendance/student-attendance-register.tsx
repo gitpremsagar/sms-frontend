@@ -61,6 +61,7 @@ type StudentAttendanceRegisterProps = {
   basePath: string;
   takePath: string;
   showClassSelector?: boolean;
+  initialStudentId?: string;
 };
 
 type SelectedCell = {
@@ -103,13 +104,20 @@ export function StudentAttendanceRegister({
   basePath,
   takePath,
   showClassSelector = false,
+  initialStudentId,
 }: StudentAttendanceRegisterProps) {
   const router = useRouter();
   const now = new Date();
   const [year, setYear] = useState(register.year);
   const [month, setMonth] = useState(register.month);
   const [classId, setClassId] = useState(register.classId ?? "");
-  const [nameSearch, setNameSearch] = useState("");
+  const initialStudent = initialStudentId
+    ? register.students.find((student) => student.id === initialStudentId)
+    : undefined;
+  const [nameSearch, setNameSearch] = useState(initialStudent?.name ?? "");
+  const [selectedStudentId, setSelectedStudentId] = useState(
+    initialStudentId ?? "",
+  );
   const [selectedCell, setSelectedCell] = useState<SelectedCell | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -123,6 +131,12 @@ export function StudentAttendanceRegister({
   const showClassColumn = showClassSelector && !register.classId;
 
   const filteredStudents = useMemo(() => {
+    if (selectedStudentId) {
+      return register.students.filter(
+        (student) => student.id === selectedStudentId,
+      );
+    }
+
     const normalizedSearch = nameSearch.trim().toLowerCase();
     if (!normalizedSearch) {
       return register.students;
@@ -133,7 +147,7 @@ export function StudentAttendanceRegister({
         student.rollNumber.toLowerCase().includes(normalizedSearch) ||
         student.className.toLowerCase().includes(normalizedSearch),
     );
-  }, [register.students, nameSearch]);
+  }, [register.students, nameSearch, selectedStudentId]);
 
   const yearOptions = useMemo(() => {
     const currentYear = now.getFullYear();
@@ -159,6 +173,9 @@ export function StudentAttendanceRegister({
     if (showClassSelector && classId) {
       params.set("classId", classId);
     }
+    if (selectedStudentId) {
+      params.set("studentId", selectedStudentId);
+    }
     router.push(`${basePath}?${params.toString()}`);
   }
 
@@ -167,7 +184,21 @@ export function StudentAttendanceRegister({
     setMonth(now.getMonth() + 1);
     setClassId("");
     setNameSearch("");
+    setSelectedStudentId("");
     router.push(basePath);
+  }
+
+  function clearStudentFocus() {
+    setSelectedStudentId("");
+    setNameSearch("");
+    const params = new URLSearchParams({
+      year: String(register.year),
+      month: String(register.month),
+    });
+    if (showClassSelector && (register.classId || classId)) {
+      params.set("classId", register.classId ?? classId);
+    }
+    router.push(`${basePath}?${params.toString()}`);
   }
 
   function isArchivedStudent(student: RegisterStudent): boolean {
@@ -269,8 +300,29 @@ export function StudentAttendanceRegister({
               type="search"
               placeholder="Search by name, roll number, or class..."
               value={nameSearch}
-              onChange={(event) => setNameSearch(event.target.value)}
+              onChange={(event) => {
+                setSelectedStudentId("");
+                setNameSearch(event.target.value);
+              }}
             />
+            {selectedStudentId && initialStudent ? (
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <span>
+                  Showing attendance for{" "}
+                  <span className="font-medium text-foreground">
+                    {initialStudent.name}
+                  </span>
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearStudentFocus}
+                >
+                  Show all students
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap items-end gap-3">

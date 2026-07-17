@@ -1,11 +1,14 @@
 import { apiFetch } from "./api";
 
+export type ClassKind = "SCHOOL" | "COACHING";
+
 export type SchoolClass = {
   id: string;
   className: string;
   teacherId: string;
   teacherName: string;
   monthlyFee: number;
+  kind: ClassKind;
   createdAt: string;
 };
 
@@ -13,13 +16,19 @@ export type CreateClassInput = {
   className: string;
   teacherId: string;
   monthlyFee?: number;
+  kind: ClassKind;
 };
 
 export type UpdateClassInput = {
   className?: string;
   teacherId?: string;
   monthlyFee?: number;
+  kind?: ClassKind;
 };
+
+export function classKindLabel(kind: ClassKind): string {
+  return kind === "COACHING" ? "Coaching" : "School";
+}
 
 export async function createClass(
   input: CreateClassInput,

@@ -1,5 +1,7 @@
 import { apiFetch } from "./api";
 
+export type ClassKind = "SCHOOL" | "COACHING";
+
 export type FeePaymentCellStatus = "PAID" | "PARTIAL" | "UNPAID" | "UPCOMING";
 
 export type FeePaymentCell = {
@@ -14,6 +16,7 @@ export type FeeRegisterStudent = {
   rollNumber: string;
   classId: string;
   className: string;
+  classKind: ClassKind;
   monthlyFee: number;
   payments: Record<number, FeePaymentCell>;
 };
@@ -23,7 +26,7 @@ export type FeeRegister = {
   financialYearLabel: string;
   months: { month: number; label: string; calendarYear: number }[];
   students: FeeRegisterStudent[];
-  classes: { id: string; className: string; monthlyFee: number }[];
+  classes: { id: string; className: string; monthlyFee: number; kind: ClassKind }[];
 };
 
 export type FeeReportMonthSummary = {
