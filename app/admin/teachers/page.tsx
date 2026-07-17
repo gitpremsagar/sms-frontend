@@ -1,41 +1,35 @@
-import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { SectionHeader } from "@/components/ui/section-header";
-import { TeachersList } from "@/components/admin/teachers-list";
+import { TeacherSalaryRegister } from "@/components/admin/teacher-salary-register";
+import { getSalaryRegister } from "@/lib/salary.server";
 import { requireRole } from "@/lib/require-role";
-import { getTeachers } from "@/lib/teachers.server";
 
-export default async function AdminTeachersPage() {
+type TeachersPageProps = {
+  searchParams: Promise<{
+    year?: string;
+    month?: string;
+  }>;
+};
+
+export default async function AdminTeachersPage({
+  searchParams,
+}: TeachersPageProps) {
   await requireRole("ADMIN");
-  const teachers = await getTeachers();
 
-  return (
-    <Card>
-      <SectionHeader
-        title="Teachers"
-        description={
-          teachers.length === 0
-            ? "No teachers yet."
-            : `${teachers.length} teacher${teachers.length === 1 ? "" : "s"} registered.`
-        }
-        actions={
-          <>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/admin/teacher/attendance">Attendance Register</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/admin/teacher/salary">Salary Register</Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link href="/admin/teacher/add-teacher">Add Teacher</Link>
-            </Button>
-          </>
-        }
-      />
-      <CardContent>
-        <TeachersList teachers={teachers} />
-      </CardContent>
-    </Card>
-  );
+  const params = await searchParams;
+  const now = new Date();
+  const year = params.year ? Number(params.year) : now.getFullYear();
+  const month = params.month ? Number(params.month) : now.getMonth() + 1;
+
+  const register = await getSalaryRegister(year, month);
+
+  if (!register) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Unable to load salary register. Please try again.
+        </p>
+      </div>
+    );
+  }
+
+  return <TeacherSalaryRegister register={register} />;
 }

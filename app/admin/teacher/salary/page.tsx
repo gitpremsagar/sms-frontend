@@ -1,6 +1,4 @@
-import { TeacherSalaryRegister } from "@/components/admin/teacher-salary-register";
-import { getSalaryRegister } from "@/lib/salary.server";
-import { requireRole } from "@/lib/require-role";
+import { redirect } from "next/navigation";
 
 type SalaryPageProps = {
   searchParams: Promise<{
@@ -12,24 +10,14 @@ type SalaryPageProps = {
 export default async function TeacherSalaryPage({
   searchParams,
 }: SalaryPageProps) {
-  await requireRole("ADMIN");
-
   const params = await searchParams;
-  const now = new Date();
-  const year = params.year ? Number(params.year) : now.getFullYear();
-  const month = params.month ? Number(params.month) : now.getMonth() + 1;
-
-  const register = await getSalaryRegister(year, month);
-
-  if (!register) {
-    return (
-      <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Unable to load salary register. Please try again.
-        </p>
-      </div>
-    );
+  const query = new URLSearchParams();
+  if (params.year) {
+    query.set("year", params.year);
   }
-
-  return <TeacherSalaryRegister register={register} />;
+  if (params.month) {
+    query.set("month", params.month);
+  }
+  const suffix = query.toString();
+  redirect(suffix ? `/admin/teachers?${suffix}` : "/admin/teachers");
 }

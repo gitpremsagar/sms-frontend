@@ -145,10 +145,6 @@ export function TeacherSalaryView({
             value={formatCurrency(breakdown.monthlySalary)}
           />
           <StatItem
-            label="Working Days"
-            value={String(breakdown.workingDays)}
-          />
-          <StatItem
             label="Daily Rate"
             value={formatCurrency(breakdown.dailyRate)}
           />

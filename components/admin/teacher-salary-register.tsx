@@ -1,15 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BackLink } from "@/components/ui/back-link";
+import { TeacherRowActions } from "@/components/admin/teacher-row-actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { ResponsiveDataTable } from "@/components/ui/responsive-data-table";
 import { formatCurrency, type SalaryBreakdown, type SalaryRegister } from "@/lib/salary";
@@ -44,93 +42,98 @@ export function TeacherSalaryRegister({ register }: TeacherSalaryRegisterProps) 
   const yearOptions = Array.from({ length: 5 }, (_, index) => register.year - 2 + index);
 
   function applyFilters() {
-    router.push(`/admin/teacher/salary?year=${year}&month=${month}`);
+    router.push(`/admin/teachers?year=${year}&month=${month}`);
   }
 
   function resetFilters() {
     const now = new Date();
     router.push(
-      `/admin/teacher/salary?year=${now.getFullYear()}&month=${now.getMonth() + 1}`,
+      `/admin/teachers?year=${now.getFullYear()}&month=${now.getMonth() + 1}`,
     );
   }
 
   return (
-    <div className="space-y-6">
-      <BackLink href="/admin/teachers">← Back to Teachers</BackLink>
+    <div className="space-y-4">
+      <Card>
+        <CardContent>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="space-y-1">
+                <label htmlFor="year" className="text-xs text-muted-foreground">
+                  Year
+                </label>
+                <select
+                  id="year"
+                  className={selectClassName}
+                  value={year}
+                  onChange={(event) => setYear(Number(event.target.value))}
+                >
+                  {yearOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="month" className="text-xs text-muted-foreground">
+                  Month
+                </label>
+                <select
+                  id="month"
+                  className={selectClassName}
+                  value={month}
+                  onChange={(event) => setMonth(Number(event.target.value))}
+                >
+                  {MONTH_NAMES.map((name, index) => (
+                    <option key={name} value={index + 1}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button onClick={applyFilters}>Apply</Button>
+              <Button variant="outline" onClick={resetFilters}>
+                Reset
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
+              <Button variant="outline" asChild>
+                <Link
+                  href={`/admin/teacher/attendance?year=${year}&month=${month}`}
+                >
+                  Attendance
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/admin/teacher/add-teacher">Add Teacher</Link>
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>
-            Salary for {MONTH_NAMES[register.month - 1]} {register.year}
-          </CardTitle>
-          <CardDescription>
-            Monthly payroll calculated from attendance. Deductions apply for
-            absent and unmarked working days (full day) and half-days (half day).
-            Late punch-in does not affect salary.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="space-y-1">
-              <label htmlFor="year" className="text-xs text-muted-foreground">
-                Year
-              </label>
-              <select
-                id="year"
-                className={selectClassName}
-                value={year}
-                onChange={(event) => setYear(Number(event.target.value))}
-              >
-                {yearOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="month" className="text-xs text-muted-foreground">
-                Month
-              </label>
-              <select
-                id="month"
-                className={selectClassName}
-                value={month}
-                onChange={(event) => setMonth(Number(event.target.value))}
-              >
-                {MONTH_NAMES.map((name, index) => (
-                  <option key={name} value={index + 1}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Button onClick={applyFilters}>Apply</Button>
-            <Button variant="outline" onClick={resetFilters}>
-              Reset
-            </Button>
-          </div>
-
+        <CardContent className="pt-6">
           {register.breakdowns.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No teachers found. Add teachers and set their monthly salary before
-              viewing payroll.
-            </p>
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                No teachers found. Add teachers and set their monthly salary
+                before viewing payroll.
+              </p>
+              <Button asChild size="sm">
+                <Link href="/admin/teacher/add-teacher">Add Teacher</Link>
+              </Button>
+            </div>
           ) : (
             <ResponsiveDataTable<SalaryBreakdown>
               columns={[
                 { key: "name", label: "Teacher" },
                 {
-                  key: "employeeId",
-                  label: "Employee ID",
-                  render: (row) => row.employeeId ?? "—",
-                },
-                {
                   key: "monthlySalary",
                   label: "Monthly Salary",
                   render: (row) => formatCurrency(row.monthlySalary),
                 },
-                { key: "workingDays", label: "Working Days" },
                 {
                   key: "dailyRate",
                   label: "Daily Rate",
@@ -157,6 +160,9 @@ export function TeacherSalaryRegister({ register }: TeacherSalaryRegisterProps) 
               ]}
               rows={register.breakdowns}
               rowKey={(row) => row.teacherId}
+              actions={(row) => (
+                <TeacherRowActions id={row.teacherId} name={row.name} />
+              )}
             />
           )}
         </CardContent>

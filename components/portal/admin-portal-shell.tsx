@@ -136,6 +136,7 @@ export function AdminPortalShell({ children }: AdminPortalShellProps) {
   }
 
   const isFullWidthPage =
+    pathname === "/admin/teachers" ||
     pathname === "/admin/students" ||
     pathname.startsWith("/admin/student/attendance") ||
     pathname.startsWith("/admin/teacher/attendance") ||
