@@ -10,6 +10,9 @@ export type RegisterStudent = {
   id: string;
   name: string;
   rollNumber: string;
+  isStudying: boolean;
+  classId: string;
+  className: string;
 };
 
 export type StudentMonthlySummary = {
@@ -18,7 +21,7 @@ export type StudentMonthlySummary = {
 };
 
 export type StudentAttendanceRegister = {
-  classId: string;
+  classId: string | null;
   className: string;
   classes: { id: string; className: string }[];
   students: RegisterStudent[];

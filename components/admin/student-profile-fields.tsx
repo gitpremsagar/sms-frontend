@@ -157,7 +157,7 @@ export function StudentProfileFields({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="isStudying">Is Studying</Label>
+        <Label htmlFor="isStudying">Status</Label>
         <select
           id="isStudying"
           value={values.isStudying ? "true" : "false"}
@@ -166,8 +166,8 @@ export function StudentProfileFields({
           }
           className={selectClassName}
         >
-          <option value="true">Yes</option>
-          <option value="false">No</option>
+          <option value="true">Active</option>
+          <option value="false">Archived</option>
         </select>
       </div>
     </div>

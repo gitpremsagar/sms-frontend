@@ -14,9 +14,9 @@ async function getCookieHeader(): Promise<string> {
 }
 
 export async function getStudentAttendanceRegister(
-  classId: string,
   year: number,
   month: number,
+  classId?: string,
 ): Promise<StudentAttendanceRegister | null> {
   const cookieHeader = await getCookieHeader();
 
@@ -25,10 +25,12 @@ export async function getStudentAttendanceRegister(
   }
 
   const params = new URLSearchParams({
-    classId,
     year: String(year),
     month: String(month),
   });
+  if (classId) {
+    params.set("classId", classId);
+  }
 
   const response = await fetch(
     `${getApiBaseUrl()}/api/student-attendance/register?${params.toString()}`,

@@ -13,6 +13,8 @@ import type { Student } from "@/lib/students";
 const selectClassName =
   "flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 sm:max-w-xs";
 
+type StatusFilter = "" | "active" | "archived";
+
 type StudentsListProps = {
   students: Student[];
   classes: SchoolClass[];
@@ -21,6 +23,7 @@ type StudentsListProps = {
 export function StudentsList({ students, classes }: StudentsListProps) {
   const [search, setSearch] = useState("");
   const [classId, setClassId] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("");
 
   const filteredStudents = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -30,12 +33,17 @@ export function StudentsList({ students, classes }: StudentsListProps) {
       const matchesSearch =
         !normalizedSearch ||
         student.name.toLowerCase().includes(normalizedSearch);
+      const matchesStatus =
+        !statusFilter ||
+        (statusFilter === "active" && student.isStudying) ||
+        (statusFilter === "archived" && !student.isStudying);
 
-      return matchesClass && matchesSearch;
+      return matchesClass && matchesSearch && matchesStatus;
     });
-  }, [students, search, classId]);
+  }, [students, search, classId, statusFilter]);
 
-  const hasFilters = search.trim().length > 0 || classId.length > 0;
+  const hasFilters =
+    search.trim().length > 0 || classId.length > 0 || statusFilter.length > 0;
 
   if (students.length === 0) {
     return (
@@ -52,7 +60,7 @@ export function StudentsList({ students, classes }: StudentsListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="student-search">Search by Name</Label>
           <Input
@@ -80,6 +88,22 @@ export function StudentsList({ students, classes }: StudentsListProps) {
             ))}
           </select>
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="student-status-filter">Filter by Status</Label>
+          <select
+            id="student-status-filter"
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(event.target.value as StatusFilter)
+            }
+            className={selectClassName}
+          >
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
       </div>
 
       {hasFilters ? (
@@ -93,10 +117,28 @@ export function StudentsList({ students, classes }: StudentsListProps) {
         sortable
         columns={[
           { key: "serialNumber", label: "S.No." },
-          { key: "name", label: "Name" },
+          {
+            key: "name",
+            label: "Name",
+            render: (row) => (
+              <span className="inline-flex flex-wrap items-center gap-2">
+                {row.name}
+                {!row.isStudying ? (
+                  <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Archived
+                  </span>
+                ) : null}
+              </span>
+            ),
+          },
           { key: "email", label: "Email" },
           { key: "studentRollNumber", label: "Roll Number" },
           { key: "className", label: "Class" },
+          {
+            key: "isStudying",
+            label: "Status",
+            render: (row) => (row.isStudying ? "Active" : "Archived"),
+          },
         ]}
         rows={filteredStudents}
         rowKey={(row) => row.id}
