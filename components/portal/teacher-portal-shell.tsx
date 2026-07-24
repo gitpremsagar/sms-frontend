@@ -48,6 +48,12 @@ const NAV_ITEMS = [
     match: (path: string) => path.startsWith("/teacher/fees"),
   },
   {
+    href: "/teacher/event-fees",
+    label: "Event Fees",
+    icon: IndianRupee,
+    match: (path: string) => path.startsWith("/teacher/event-fees"),
+  },
+  {
     href: "/teacher/notifications",
     label: "Notifications",
     icon: Bell,
@@ -129,6 +135,7 @@ export function TeacherPortalShell({ children }: TeacherPortalShellProps) {
   const isFullWidthPage =
     pathname.startsWith("/teacher/attendance") ||
     pathname.startsWith("/teacher/fees") ||
+    pathname.startsWith("/teacher/event-fees") ||
     pathname.includes("/attendance/");
 
   useEffect(() => {

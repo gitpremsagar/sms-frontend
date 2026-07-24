@@ -57,6 +57,12 @@ const NAV_ITEMS = [
     match: (path: string) => path.startsWith("/admin/fees"),
   },
   {
+    href: "/admin/event-fees",
+    label: "Event Fees",
+    icon: IndianRupee,
+    match: (path: string) => path.startsWith("/admin/event-fees"),
+  },
+  {
     href: "/admin/notifications",
     label: "Notifications",
     icon: Bell,
@@ -140,7 +146,8 @@ export function AdminPortalShell({ children }: AdminPortalShellProps) {
     pathname === "/admin/students" ||
     pathname.startsWith("/admin/student/attendance") ||
     pathname.startsWith("/admin/teacher/attendance") ||
-    pathname.startsWith("/admin/fees");
+    pathname.startsWith("/admin/fees") ||
+    pathname.startsWith("/admin/event-fees");
 
   return (
     <div className="min-h-screen bg-muted/20">
